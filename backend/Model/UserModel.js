@@ -29,11 +29,8 @@ const userSchema = new Schema({
     address: {
         type: String,
         required: true
-    },
-    rewardPoints: {
-        type: Number,
-        default: 0
     }
+   
 });
 
 module.exports = mongoose.model("User", userSchema);
