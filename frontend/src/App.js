@@ -6,6 +6,9 @@ import ProductsPage from "./pages/ProductsPage";
 import AboutUs from "./pages/AboutUs";
 import Register from "./components/register/register";
 import Login from "./pages/Login";
+import InventoryDashboard from "./pages/InventoryDashboard";
+
+
 
 function App() {
   return (
@@ -18,6 +21,8 @@ function App() {
         <Route path="/about" element={<AboutUs />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/inventory" element={<InventoryDashboard />} />
+
 
       </Routes>
     </div>
