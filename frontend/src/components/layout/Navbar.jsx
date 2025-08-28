@@ -36,10 +36,7 @@ function Navbar() {
               </>
             ) : (
               <div className="flex space-x-3">
-                <Link 
-                  to="/login" 
-                  className="px-4 py-2 rounded bg-green-800 text-white hover:bg-green-900 transition-colors"
-                >
+                <Link to="/login" className="px-4 py-2 rounded bg-green-800 text-white hover:bg-green-900 transition-colors">
                   Login
                 </Link>
                 <Link 
