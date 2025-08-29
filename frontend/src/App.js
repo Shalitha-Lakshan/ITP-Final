@@ -7,6 +7,11 @@ import AboutUs from "./pages/AboutUs";
 import Register from "./components/register/register";
 import Login from "./pages/Login";
 import InventoryDashboard from "./pages/InventoryDashboard";
+import FAQ from "./pages/FAQ";
+import InventoryProfile from "./pages/InventoryProfile";
+import InventoryForms from "./pages/InventoryForms";
+import InventorySorting from "./pages/InventorySorting";
+
 
 
 
@@ -22,7 +27,11 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/inventory" element={<InventoryDashboard />} />
-
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/inventory/profile" element={<InventoryProfile />} />
+        <Route path="/inventory/forms" element={<InventoryForms />} />
+        <Route path="/inventory/sorting" element={<InventorySorting />} />
+        
 
       </Routes>
     </div>
