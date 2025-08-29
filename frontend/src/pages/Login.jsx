@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
+import { Recycle, Gift, Globe, Users } from "lucide-react";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 function Login() {
   const navigate = useNavigate();
@@ -22,13 +25,10 @@ function Login() {
     setMessage("");
     console.log("Attempting to log in with data:", formData);
 
-    // ✅ Simulated login validation
     if (formData.username === "testuser" && formData.password === "password123") {
       setMessage("Login successful!");
-      
-      // ✅ Redirect to HomePage after 1 second
       setTimeout(() => {
-        navigate("/"); // go to HomePage
+        navigate("/"); // redirect to homepage
       }, 1000);
     } else {
       setMessage("Login failed. Check your username and password.");
@@ -36,126 +36,167 @@ function Login() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 font-sans">
-      {/* Left side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white md:bg-gray-100">
-        <div className="w-full max-w-sm rounded-3xl p-8 bg-white shadow-xl">
-          <div className="flex flex-col items-center mb-6">
-            <h1 className="text-3xl font-bold text-green-600">EcoRecycle</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Join the sustainable recycling revolution
-            </p>
-          </div>
-
-          {/* Login/Register Toggle */}
-          <div className="flex mb-6 text-sm font-medium">
-            <button
-              className="flex-1 p-3 rounded-full bg-green-600 text-white shadow-md"
-              onClick={() => console.log("Currently on login page")}
-            >
-              Login
-            </button>
-            <button
-              className="flex-1 p-3 rounded-full -ml-4 bg-gray-200 text-gray-700 hover:bg-gray-300"
-              onClick={() => navigate("/register")} // ✅ Navigate to register page
-            >
-              Register
-            </button>
-          </div>
-
-          {/* Messages */}
-          {message && (
-            <div
-              className={`p-3 mb-4 text-center rounded-lg ${
-                message.includes("failed")
-                  ? "bg-red-100 text-red-700"
-                  : "bg-green-100 text-green-700"
-              }`}
-            >
-              {message}
+    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID_HERE">
+      <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4 sm:p-8">
+        <div className="flex flex-col lg:flex-row w-full max-w-5xl rounded-2xl shadow-xl overflow-hidden">
+          
+          {/* Left Side - Login Form */}
+          <div className="bg-white p-8 sm:p-12 w-full lg:w-1/2 flex flex-col justify-center">
+            <div className="flex items-center justify-center mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">
+                Welcome Back
+              </h1>
             </div>
-          )}
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">
-              Welcome Back
-            </h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Sign in to your EcoRecycle account
-            </p>
-
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={() => console.log("Forgot password clicked!")}
-                className="text-sm text-green-600 hover:underline"
+            {/* Message */}
+            {message && (
+              <div
+                className={`p-3 mb-4 text-center rounded-lg ${
+                  message.includes("failed")
+                    ? "bg-red-100 text-red-700"
+                    : "bg-green-100 text-green-700"
+                }`}
               >
-                Forgot password?
+                {message}
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-green-300 focus:outline-none"
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-green-300 focus:outline-none"
+              />
+
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => console.log("Forgot password clicked!")}
+                  className="text-sm text-green-600 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-green-500 text-white font-semibold py-3 rounded-lg hover:bg-green-600 transition duration-300"
+              >
+                Sign In
+              </button>
+            </form>
+
+            {/* OAuth Buttons */}
+            <div className="mt-6 space-y-3">
+              {/* Google Login */}
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  console.log("Google Credential:", credentialResponse);
+                  const userObject = jwtDecode(credentialResponse.credential);
+                  console.log("Google User:", userObject);
+                  navigate("/"); // redirect home
+                }}
+                onError={() => console.log("Google login failed")}
+                useOneTap
+                text="continue_with"
+                shape="pill"
+                size="large"
+                className="w-full flex justify-center items-center bg-white text-gray-800 border border-gray-300 hover:bg-gray-100 transition duration-200"
+              >
+                <span className="mr-3">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+                    alt="Google"
+                    className="w-5 h-5"
+                  />
+                </span>
+                Continue with Google
+              </GoogleLogin>
+
+              {/* Facebook Login */}
+              <button
+                onClick={() => window.location.href = "https://www.facebook.com/"}
+                className="w-full flex justify-center items-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+              >
+                <span className="mr-3">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png"
+                    alt="Facebook"
+                    className="w-5 h-5"
+                  />
+                </span>
+                Continue with Facebook
               </button>
             </div>
 
-            <button
-              type="submit"
-              className="w-full p-3 mt-4 text-white bg-green-600 rounded-xl font-bold hover:bg-green-700 transition-colors"
-            >
-              Sign In
-            </button>
-          </form>
-        </div>
-      </div>
+            {/* Navigate to Register */}
+            <p className="text-sm text-gray-600 text-center mt-6">
+              Don’t have an account?{" "}
+              <span
+                onClick={() => navigate("/register")}
+                className="text-blue-600 cursor-pointer hover:underline"
+              >
+                Register
+              </span>
+            </p>
+          </div>
 
-      {/* Right Side - Marketing */}
-      <div className="flex-1 hidden md:flex items-center justify-center p-8 bg-gradient-to-br from-green-500 to-blue-500 text-white rounded-l-3xl shadow-xl">
-        <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold text-white mb-6">
-            Turn Waste Into Rewards
-          </h2>
-          <p className="text-gray-200 mb-8">
-            Join thousands of eco-warriors transforming plastic waste into
-            valuable resources while earning points and making a positive
-            environmental impact.
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col items-start p-4">
-              <h3 className="font-semibold text-white">Smart Recycling</h3>
-              <p className="text-xs text-gray-200">AI-powered sorting</p>
-            </div>
-            <div className="flex flex-col items-start p-4">
-              <h3 className="font-semibold text-white">Earn Points</h3>
-              <p className="text-xs text-gray-200">Rewards for recycling</p>
-            </div>
-            <div className="flex flex-col items-start p-4">
-              <h3 className="font-semibold text-white">Save Planet</h3>
-              <p className="text-xs text-gray-200">Track your impact</p>
-            </div>
-            <div className="flex flex-col items-start p-4">
-              <h3 className="font-semibold text-white">Community</h3>
-              <p className="text-xs text-gray-200">Global network</p>
+          {/* Right Side - Promotional Content */}
+          <div className="w-full lg:w-1/2 p-8 sm:p-12 bg-gradient-to-br from-green-500 to-blue-500 text-white flex flex-col justify-center">
+            <h2 className="text-4xl font-bold mb-4 leading-tight">
+              Turn Waste Into Rewards
+            </h2>
+            <p className="text-lg mb-8">
+              Join thousands of eco-warriors transforming plastic waste into valuable resources while earning points and making a positive environmental impact.
+            </p>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="flex items-start">
+                <Recycle className="w-8 h-8 mr-3 text-white" />
+                <div>
+                  <h3 className="text-xl font-semibold">Smart Recycling</h3>
+                  <p className="text-sm text-gray-200">AI-powered sorting</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <Gift className="w-8 h-8 mr-3 text-white" />
+                <div>
+                  <h3 className="text-xl font-semibold">Earn Points</h3>
+                  <p className="text-sm text-gray-200">Rewards for recycling</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <Globe className="w-8 h-8 mr-3 text-white" />
+                <div>
+                  <h3 className="text-xl font-semibold">Save Planet</h3>
+                  <p className="text-sm text-gray-200">Track your impact</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <Users className="w-8 h-8 mr-3 text-white" />
+                <div>
+                  <h3 className="text-xl font-semibold">Community</h3>
+                  <p className="text-sm text-gray-200">Global network</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </GoogleOAuthProvider>
   );
 }
 

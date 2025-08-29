@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ import navigate hook
+import { useNavigate } from "react-router-dom";
+import { Recycle, Gift, Globe2, Users } from "lucide-react"; // ✅ Lucide icons
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -10,8 +11,8 @@ function Register() {
     mobile: "",
     address: "",
   });
-  const [message, setMessage] = useState('');
-  const navigate = useNavigate(); // ✅ use navigate
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData((prevState) => ({
@@ -22,10 +23,9 @@ function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setMessage('');
+    setMessage("");
     console.log("Attempting to register with data:", formData);
     setMessage("Registration successful!");
-    // ✅ After successful registration navigate to login
     setTimeout(() => navigate("/login"), 1500);
   };
 
@@ -42,7 +42,13 @@ function Register() {
           </div>
 
           {message && (
-            <div className={`p-3 mb-4 text-center rounded-lg ${message.includes('failed') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            <div
+              className={`p-3 mb-4 text-center rounded-lg ${
+                message.includes("failed")
+                  ? "bg-red-100 text-red-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
               {message}
             </div>
           )}
@@ -111,7 +117,6 @@ function Register() {
             </button>
           </form>
 
-          {/* ✅ Navigate to login page */}
           <p className="text-sm text-gray-600 text-center mt-6">
             Already have an account?{" "}
             <span
@@ -129,49 +134,38 @@ function Register() {
             Turn Waste Into Rewards
           </h2>
           <p className="text-lg mb-8">
-            Join thousands of eco-warriors transforming plastic waste into valuable resources while earning points and making a positive environmental impact.
+            Join thousands of eco-warriors transforming plastic waste into
+            valuable resources while earning points and making a positive
+            environmental impact.
           </p>
+
           <div className="grid grid-cols-2 gap-6">
             <div className="flex items-start">
-              <span className="flex-shrink-0 mr-3">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 2.5a.5.5 0 01.5.5v16a.5.5 0 01-1 0V3a.5.5 0 01.5-.5z" />
-                  <path fillRule="evenodd" d="M10 2.5a7.5 7.5 0 100 15 7.5 7.5 0 000-15zm-6.5 7.5a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0z" clipRule="evenodd" />
-                </svg>
-              </span>
+              <Recycle className="w-8 h-8 mr-3 text-white" />
               <div>
                 <h3 className="text-xl font-semibold">Smart Recycling</h3>
                 <p className="text-sm text-gray-200">AI-powered sorting</p>
               </div>
             </div>
+
             <div className="flex items-start">
-              <span className="flex-shrink-0 mr-3">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.865.503l-3 5a1 1 0 00.865 1.497h6a1 1 0 00.865-1.497l-3-5A1 1 0 0010 7z" clipRule="evenodd" />
-                </svg>
-              </span>
+              <Gift className="w-8 h-8 mr-3 text-white" />
               <div>
                 <h3 className="text-xl font-semibold">Earn Points</h3>
                 <p className="text-sm text-gray-200">Rewards for recycling</p>
               </div>
             </div>
+
             <div className="flex items-start">
-              <span className="flex-shrink-0 mr-3">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-12a1 1 0 10-2 0v4a1 1 0 102 0V6zm0 6a1 1 0 10-2 0h2a1 1 0 100-2z" clipRule="evenodd" />
-                </svg>
-              </span>
+              <Globe2 className="w-8 h-8 mr-3 text-white" />
               <div>
                 <h3 className="text-xl font-semibold">Save Planet</h3>
                 <p className="text-sm text-gray-200">Track your impact</p>
               </div>
             </div>
+
             <div className="flex items-start">
-              <span className="flex-shrink-0 mr-3">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a1 1 0 011-1h1.464a.5.5 0 01.354.146l2.121 2.121a.5.5 0 01.146.354V19a1 1 0 01-1 1h-4a1 1 0 01-1-1zM17 9a3 3 0 100-6 3 3 0 000 6zm-7 9a1 1 0 011-1h1.464a.5.5 0 01.354.146l2.121 2.121a.5.5 0 01.146.354V19a1 1 0 01-1 1h-4a1 1 0 01-1-1z" clipRule="evenodd" />
-                </svg>
-              </span>
+              <Users className="w-8 h-8 mr-3 text-white" />
               <div>
                 <h3 className="text-xl font-semibold">Community</h3>
                 <p className="text-sm text-gray-200">Global network</p>
