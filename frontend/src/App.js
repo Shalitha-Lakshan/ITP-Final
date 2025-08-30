@@ -6,11 +6,12 @@ import ProductsPage from "./pages/ProductsPage";
 import AboutUs from "./pages/AboutUs";
 import Register from "./components/register/register";
 import Login from "./pages/Login";
-import InventoryDashboard from "./pages/InventoryDashboard";
+import InventoryDashboard from "./components/Inventory/InventoryDashboard";
 import FAQ from "./pages/FAQ";
-import InventoryProfile from "./pages/InventoryProfile";
-import InventoryForms from "./pages/InventoryForms";
-import InventorySorting from "./pages/InventorySorting";
+import InventoryProfile from "./components/Inventory/InventoryProfile";
+import InventoryForms from "./components/Inventory/InventoryForms";
+import InventorySorting from "./components/Inventory/InventorySorting";
+import ReportPage from "./components/Inventory/ReportPage";
 
 
 
@@ -31,6 +32,7 @@ function App() {
         <Route path="/inventory/profile" element={<InventoryProfile />} />
         <Route path="/inventory/forms" element={<InventoryForms />} />
         <Route path="/inventory/sorting" element={<InventorySorting />} />
+        <Route path="/inventory/reports" element={<ReportPage />} />
         
 
       </Routes>

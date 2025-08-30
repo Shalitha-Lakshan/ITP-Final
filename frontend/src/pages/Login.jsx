@@ -36,7 +36,7 @@ function Login() {
   };
 
   return (
-    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID_HERE">
+    <GoogleOAuthProvider clientId="715586356915-nnbig0ob12djfjiq073mt5nqc4d0eiqn.apps.googleusercontent.com">
       <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4 sm:p-8">
         <div className="flex flex-col lg:flex-row w-full max-w-5xl rounded-2xl shadow-xl overflow-hidden">
           
