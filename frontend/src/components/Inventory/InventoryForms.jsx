@@ -1,135 +1,221 @@
 import React, { useState } from "react";
-import {
-  CubeIcon,
-  ChartBarIcon,
-  DocumentChartBarIcon,
-  ArrowTrendingUpIcon,
-  UserCircleIcon,
-  InboxArrowDownIcon,
-} from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
+import {
+  ChartBarIcon,
+  CubeIcon,
+  ArrowTrendingUpIcon,
+  DocumentChartBarIcon,
+} from "@heroicons/react/24/outline";
 
 export default function InventoryForms() {
-  const [bottles, setBottles] = useState("");
-  const [sorting, setSorting] = useState({ mud: "", rices: "", powder: "" });
+  const [formData, setFormData] = useState({
+    transporterName: "",
+    vehicleNo: "",
+    bottleType: "",
+    quantity: "",
+  });
 
-  const handleBottleSubmit = (e) => {
-    e.preventDefault();
-    alert(`✅ Received ${bottles} bottles from transporter.`);
-    setBottles("");
+  const [records, setRecords] = useState([]);
+  const [editIndex, setEditIndex] = useState(null); // Track editing row
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "quantity" && !/^\d{0,3}$/.test(value)) return;
+
+    if (name === "vehicleNo") {
+      // Allow only capital letters, digits, and dash while typing
+      if (!/^[A-Z0-9-]*$/.test(value)) return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleSortingSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    alert(
-      `✅ Sorting saved: Mud=${sorting.mud} Kg, Rices=${sorting.rices} Kg, Powder=${sorting.powder} Kg`
-    );
-    setSorting({ mud: "", rices: "", powder: "" });
+    const { transporterName, vehicleNo, bottleType, quantity } = formData;
+
+    // Validate required fields
+    if (!transporterName || !vehicleNo || !bottleType || !quantity) {
+      alert("⚠️ Please fill all fields");
+      return;
+    }
+
+    // Vehicle number validation: 3 capital letters - 4 digits (e.g., ABC-1234)
+    const vehicleRegex = /^[A-Z]{3}-\d{4}$/;
+    if (!vehicleRegex.test(vehicleNo)) {
+      alert("⚠️ Vehicle Number must be in format: ABC-1234");
+      return;
+    }
+
+    const timestamp = new Date().toLocaleString();
+
+    if (editIndex !== null) {
+      const updatedRecords = [...records];
+      updatedRecords[editIndex] = { ...formData, timestamp };
+      setRecords(updatedRecords);
+      setEditIndex(null);
+      alert("✅ Record updated successfully!");
+    } else {
+      setRecords([...records, { ...formData, timestamp }]);
+      alert("✅ Bottles received successfully!");
+    }
+
+    setFormData({ transporterName: "", vehicleNo: "", bottleType: "", quantity: "" });
+  };
+
+  const handleEdit = (index) => {
+    setFormData(records[index]);
+    setEditIndex(index);
+  };
+
+  const handleDelete = (index) => {
+    if (window.confirm("Are you sure you want to delete this record?")) {
+      const updatedRecords = records.filter((_, i) => i !== index);
+      setRecords(updatedRecords);
+      if (editIndex === index) setEditIndex(null);
+    }
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
       <aside className="bg-green-600 text-white w-64 p-6 shadow-lg">
         <h2 className="text-2xl font-bold mb-8">EcoRecycle</h2>
         <nav className="space-y-4">
-          <Link
-            to="/inventory"
-            className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition"
-          >
+          <Link to="/inventory" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition">
             <ChartBarIcon className="w-5 h-5" /> Dashboard
           </Link>
-          <Link
-            to="/inventory/forms"
-            className="flex items-center gap-2 bg-green-700 p-2 rounded-lg transition"
-          >
+          <Link to="/inventory/forms" className="flex items-center gap-2 bg-green-700 p-2 rounded-lg transition">
             <CubeIcon className="w-5 h-5" /> Inventory Forms
           </Link>
-          <Link
-            to="/inventory/sorting"
-            className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition"
-          >
+          <Link to="/inventory/sorting" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg">
             <ArrowTrendingUpIcon className="w-5 h-5" /> Sorting
           </Link>
-          <Link
-            to="/inventory/reports"
-            className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition"
-          >
+          <Link to="/inventory/reports" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition">
             <DocumentChartBarIcon className="w-5 h-5" /> Reports
           </Link>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
-        {/* Top bar */}
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Inventory Forms
-          </h1>
-          <Link to="/inventory/profile">
-            <UserCircleIcon className="w-10 h-10 text-gray-700 cursor-pointer hover:text-green-600 transition" />
-          </Link>
-        </div>
+      <main className="flex-1 p-8">
+        <div className="p-8 bg-white rounded-xl shadow-lg">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">Receive Bottles from Transporter</h2>
 
-        {/* Receive Bottles Form */}
-        <div className="bg-white p-6 rounded-xl shadow mb-10">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <InboxArrowDownIcon className="w-6 h-6 text-green-600" /> Receive Bottles
-          </h3>
-          <form onSubmit={handleBottleSubmit} className="space-y-4">
-            <input
-              type="number"
-              placeholder="Number of bottles"
-              value={bottles}
-              onChange={(e) => setBottles(e.target.value)}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
-              required
-            />
-            <button
-              type="submit"
-              className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-            >
-              Submit
-            </button>
-          </form>
-        </div>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block mb-1 font-medium text-gray-700">Transporter Name</label>
+              <input
+                type="text"
+                name="transporterName"
+                value={formData.transporterName}
+                onChange={handleChange}
+                placeholder="Enter transporter name"
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
 
-        {/* Sorting Form */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="text-lg font-semibold mb-4">Sorting Details</h3>
-          <form onSubmit={handleSortingSubmit} className="space-y-3">
-            <input
-              type="number"
-              placeholder="Mud Color (Kg)"
-              value={sorting.mud}
-              onChange={(e) => setSorting({ ...sorting, mud: e.target.value })}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500"
-              required
-            />
-            <input
-              type="number"
-              placeholder="Rices (Kg)"
-              value={sorting.rices}
-              onChange={(e) => setSorting({ ...sorting, rices: e.target.value })}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500"
-              required
-            />
-            <input
-              type="number"
-              placeholder="Powder (Kg)"
-              value={sorting.powder}
-              onChange={(e) => setSorting({ ...sorting, powder: e.target.value })}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500"
-              required
-            />
-            <button
-              type="submit"
-              className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600"
-            >
-              Save Sorting
-            </button>
+            <div>
+              <label className="block mb-1 font-medium text-gray-700">Vehicle Number</label>
+              <input
+                type="text"
+                name="vehicleNo"
+                value={formData.vehicleNo}
+                onChange={handleChange}
+                placeholder="Format: ABC-1234"
+                maxLength="8"
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium text-gray-700">Bottle Type</label>
+              <select
+                name="bottleType"
+                value={formData.bottleType}
+                onChange={handleChange}
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select bottle type</option>
+                <option value="PET">PET (Polyethylene Terephthalate)</option>
+                <option value="HDPE">HDPE (High-Density Polyethylene)</option>
+                <option value="PVC">PVC (Polyvinyl Chloride)</option>
+                <option value="LDPE">LDPE (Low-Density Polyethylene)</option>
+                <option value="PP">PP (Polypropylene)</option>
+                <option value="PS">PS (Polystyrene)</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium text-gray-700">Quantity (Bottles)</label>
+              <input
+                type="text"
+                name="quantity"
+                value={formData.quantity}
+                onChange={handleChange}
+                placeholder="Enter quantity (max 999)"
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <button
+                type="submit"
+                className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
+              >
+                {editIndex !== null ? "Update Entry" : "Save Entry"}
+              </button>
+            </div>
           </form>
+
+          {/* Records Table */}
+          {records.length > 0 && (
+            <div className="mt-10">
+              <h3 className="text-xl font-semibold mb-4">Received Bottles Records</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead className="bg-green-700 text-white">
+                    <tr>
+                      <th className="p-3 border">Bottle Type</th>
+                      <th className="p-3 border">Quantity</th>
+                      <th className="p-3 border">Timestamp</th>
+                      <th className="p-3 border">Transporter Name</th>
+                      <th className="p-3 border">Vehicle Number</th>
+                      <th className="p-3 border">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {records.map((rec, index) => (
+                      <tr key={index} className="hover:bg-gray-100">
+                        <td className="p-3 border">{rec.bottleType}</td>
+                        <td className="p-3 border">{rec.quantity}</td>
+                        <td className="p-3 border">{rec.timestamp}</td>
+                        <td className="p-3 border">{rec.transporterName}</td>
+                        <td className="p-3 border">{rec.vehicleNo}</td>
+                        <td className="p-3 border space-x-2">
+                          <button
+                            onClick={() => handleEdit(index)}
+                            className="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(index)}
+                            className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
