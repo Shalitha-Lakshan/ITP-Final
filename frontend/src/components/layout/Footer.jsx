@@ -20,7 +20,7 @@ function Footer() {
     support: [
       { to: '/faq', label: 'FAQ' },
       { to: '/contact', label: 'Contact' },
-      { to: '/support', label: 'Help Center' },
+      { to: '/help', label: 'Help Center' },
       { to: '/manufacturers', label: 'For Business' }
     ]
   };

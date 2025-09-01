@@ -78,55 +78,93 @@ export default function InventoryForms() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="bg-green-600 text-white w-64 p-6 shadow-lg">
-        <h2 className="text-2xl font-bold mb-8">EcoCycle</h2>
-        <nav className="space-y-4">
-          <Link to="/inventory" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition">
-            <ChartBarIcon className="w-5 h-5" /> Dashboard
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Enhanced Sidebar */}
+      <aside className="w-72 bg-white shadow-xl border-r border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <CubeIcon className="text-white w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Inventory Hub</h2>
+              <p className="text-sm text-gray-500">Forms & Data Entry</p>
+            </div>
+          </div>
+        </div>
+        
+        <nav className="p-4 space-y-2">
+          <Link
+            to="/inventory"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
+          >
+            <ChartBarIcon className="w-5 h-5" />
+            <span className="font-medium">Dashboard</span>
           </Link>
-          <Link to="/inventory/forms" className="flex items-center gap-2 bg-green-700 p-2 rounded-lg transition">
-            <CubeIcon className="w-5 h-5" /> Inventory Forms
+          <Link
+            to="/inventory/forms"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+          >
+            <CubeIcon className="w-5 h-5" />
+            <span className="font-medium">Inventory Forms</span>
           </Link>
-          <Link to="/inventory/materials" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg">
-            <ArrowTrendingUpIcon className="w-5 h-5" /> Raw Materials
+          <Link
+            to="/inventory/materials"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowTrendingUpIcon className="w-5 h-5" />
+            <span className="font-medium">Raw Materials</span>
           </Link>
-          <Link to="/inventory/reports" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition">
-            <DocumentChartBarIcon className="w-5 h-5" /> Reports
+          <Link
+            to="/inventory/reports"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
+          >
+            <DocumentChartBarIcon className="w-5 h-5" />
+            <span className="font-medium">Reports</span>
           </Link>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8">
-        <div className="p-8 bg-white rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Receive Bottles from Transporter</h2>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex-1 overflow-auto">
+        {/* Enhanced Header */}
+        <header className="bg-white border-b border-gray-200 p-6">
+          <div className="flex justify-between items-center">
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Transporter Name</label>
-              <input
-                type="text"
-                name="transporterName"
-                value={formData.transporterName}
-                onChange={handleChange}
-                placeholder="Enter transporter name"
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
-              />
+              <h1 className="text-3xl font-bold text-gray-900">Inventory Forms</h1>
+              <p className="text-gray-600 mt-1">Receive bottles from transporters</p>
             </div>
+          </div>
+        </header>
 
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">Vehicle Number</label>
-              <input
-                type="text"
-                name="vehicleNo"
-                value={formData.vehicleNo}
-                onChange={handleChange}
-                placeholder="Format: ABC-1234"
-                maxLength="8"
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+        <div className="p-6">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <h2 className="text-2xl font-bold mb-8 text-gray-900">Bottle Receipt Form</h2>
+
+            {/* Enhanced Form */}
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block mb-2 font-semibold text-gray-700">Transporter Name</label>
+                <input
+                  type="text"
+                  name="transporterName"
+                  value={formData.transporterName}
+                  onChange={handleChange}
+                  placeholder="Enter transporter name"
+                  className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-gray-700">Vehicle Number</label>
+                <input
+                  type="text"
+                  name="vehicleNo"
+                  value={formData.vehicleNo}
+                  onChange={handleChange}
+                  placeholder="Format: ABC-1234"
+                  maxLength="8"
+                  className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -217,7 +255,8 @@ export default function InventoryForms() {
             </div>
           )}
         </div>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

@@ -117,12 +117,12 @@ export default function InventoryDashboard() {
       <aside className="w-72 bg-white shadow-xl border-r border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
               <CubeIcon className="text-white w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">EcoCycle Inventory</h2>
-              <p className="text-sm text-gray-500">Waste Management System</p>
+              <h2 className="text-xl font-bold text-gray-900">Inventory Hub</h2>
+              <p className="text-sm text-gray-500">Material Management</p>
             </div>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function InventoryDashboard() {
         <nav className="p-4 space-y-2">
           <Link
             to="/inventory"
-            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-green-600 text-white shadow-lg"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
           >
             <ChartBarIcon className="w-5 h-5" />
             <span className="font-medium">Dashboard</span>
@@ -215,78 +215,99 @@ export default function InventoryDashboard() {
 
         <div className="p-6">
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-          <div className="bg-white p-5 rounded-xl shadow border-l-4 border-green-600">
-            <p className="text-gray-500">Total Collected</p>
-            <h2 className="text-2xl font-bold text-green-600">
-              {inventory.reduce((sum, i) => sum + i.stock, 0)} Bottles
-            </h2>
+        {/* Enhanced KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-emerald-100 text-sm font-medium">Total Collected</p>
+                <h2 className="text-3xl font-bold">{inventory.reduce((sum, i) => sum + i.stock, 0)}</h2>
+                <p className="text-emerald-100 text-sm mt-1">Items in inventory</p>
+              </div>
+              <CubeIcon className="w-10 h-10 text-emerald-200" />
+            </div>
           </div>
-          <div className="bg-white p-5 rounded-xl shadow border-l-4 border-green-500">
-            <p className="text-gray-500">Total Stock (Kg)</p>
-            <h2 className="text-2xl font-bold text-green-500">{totalWeight}</h2>
+
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Total Weight</p>
+                <h2 className="text-3xl font-bold">{totalWeight.toFixed(1)} kg</h2>
+                <p className="text-blue-100 text-sm mt-1">Material weight</p>
+              </div>
+              <ChartBarIcon className="w-10 h-10 text-blue-200" />
+            </div>
           </div>
-          <div className="bg-white p-5 rounded-xl shadow border-l-4 border-orange-500">
-            <p className="text-gray-500">Pending Requests</p>
-            <h2 className="text-2xl font-bold text-orange-500">
-              {requests.filter((r) => r.status === "Pending").length}
-            </h2>
+
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-sm font-medium">Pending Requests</p>
+                <h2 className="text-3xl font-bold">{requests.filter((r) => r.status === "Pending").length}</h2>
+                <p className="text-orange-100 text-sm mt-1">Awaiting approval</p>
+              </div>
+              <DocumentChartBarIcon className="w-10 h-10 text-orange-200" />
+            </div>
           </div>
-          <div className="bg-white p-5 rounded-xl shadow border-l-4 border-blue-500">
-            <p className="text-gray-500">Completed Orders</p>
-            <h2 className="text-2xl font-bold text-blue-600">
-              {requests.filter((r) => r.status === "Accepted").length}
-            </h2>
+
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">Completed Orders</p>
+                <h2 className="text-3xl font-bold">{requests.filter((r) => r.status === "Accepted").length}</h2>
+                <p className="text-purple-100 text-sm mt-1">Successfully processed</p>
+              </div>
+              <ArrowTrendingUpIcon className="w-10 h-10 text-purple-200" />
+            </div>
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className="mb-6 relative w-full">
-          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
+        {/* Enhanced Search bar */}
+        <div className="mb-8 relative w-full">
+          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-4 top-4" />
           <input
             type="text"
             placeholder="Search by name, color, or processed form..."
-            className="w-full pl-10 p-3 border rounded-lg shadow focus:ring-2 focus:ring-green-500"
+            className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
         </div>
 
-        {/* Production Requests */}
-        <div className="bg-white p-6 rounded-xl shadow mb-8">
-          <h3 className="text-lg font-semibold mb-4">Production Requests</h3>
-          <div className="space-y-3">
+        {/* Enhanced Production Requests */}
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-6">Production Requests</h3>
+          <div className="space-y-4">
             {requests.map((req) => (
               <div
                 key={req.id}
-                className="flex justify-between items-center border p-3 rounded-lg"
+                className="flex justify-between items-center border border-gray-200 p-4 rounded-xl hover:shadow-md transition-all duration-200"
               >
                 <div>
-                  <p className="font-semibold">{req.team}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-semibold text-gray-900">{req.team}</p>
+                  <p className="text-sm text-gray-600">
                     {req.qty} units of {req.item}
                   </p>
-                  <p
-                    className={`text-xs ${
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-2 ${
                       req.status === "Pending"
-                        ? "text-orange-500"
+                        ? "bg-orange-100 text-orange-700"
                         : req.status === "Accepted"
-                        ? "text-green-600"
-                        : "text-red-500"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
                     }`}
                   >
                     {req.status}
-                  </p>
+                  </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
                     onClick={() => handleRequestAction(req.id, "Accepted")}
-                    className="p-2 bg-green-500 text-white rounded hover:bg-green-600"
+                    className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transition-all duration-200"
                   >
                     <CheckIcon className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleRequestAction(req.id, "Rejected")}
-                    className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    className="p-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg transition-all duration-200"
                   >
                     <XMarkIcon className="w-4 h-4" />
                   </button>
@@ -296,37 +317,39 @@ export default function InventoryDashboard() {
           </div>
         </div>
 
-        {/* Inventory Items & Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Enhanced Inventory Items & Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
             {inventory.map((item) => (
-              <div key={item._id} className="bg-white p-5 rounded-xl shadow-md">
+              <div key={item._id} className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
                 {item.imageUrl && (
                   <img
                     src={`http://localhost:5000${item.imageUrl}`}
                     alt={item.name}
-                    className="w-full h-40 object-cover rounded mb-3"
+                    className="w-full h-48 object-cover rounded-xl mb-4"
                   />
                 )}
-                <h2 className="text-lg font-semibold text-gray-800">{item.name}</h2>
-                <p className="text-sm text-gray-500 mb-1">
-                  Code: <b>{item.itemCode}</b>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">{item.name}</h2>
+                <p className="text-sm text-gray-500 mb-3">
+                  Code: <span className="font-semibold text-gray-700">{item.itemCode}</span>
                 </p>
-                <div className="flex gap-2 my-2">
-                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">
+                <div className="flex gap-2 mb-4">
+                  <span className="px-3 py-1 bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 text-xs font-medium rounded-full">
                     {item.color}
                   </span>
-                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                  <span className="px-3 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 text-xs font-medium rounded-full">
                     {item.type}
                   </span>
                 </div>
-                <p className="text-gray-600">
-                  Weight: <b>{item.weight} Kg</b>
-                </p>
-                <p className="text-gray-600">
-                  Stock Level: <b>{item.stock}</b>
-                </p>
-                <p className="text-sm text-gray-400 mt-2">
+                <div className="space-y-2 mb-4">
+                  <p className="text-gray-700 flex justify-between">
+                    <span>Weight:</span> <span className="font-semibold">{item.weight} Kg</span>
+                  </p>
+                  <p className="text-gray-700 flex justify-between">
+                    <span>Stock Level:</span> <span className="font-semibold">{item.stock}</span>
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
                   Last updated: {new Date(item.lastUpdated).toLocaleString()}
                 </p>
               </div>
@@ -334,22 +357,46 @@ export default function InventoryDashboard() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white p-5 rounded-xl shadow-md">
-              <h2 className="font-semibold mb-3">Stock Levels</h2>
-              <ResponsiveContainer width="100%" height={200}>
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Stock Levels</h2>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={barData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="stock" fill="#4CAF50" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 12, fill: '#64748b' }} 
+                    axisLine={{ stroke: '#e2e8f0' }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="stock" 
+                    fill="url(#stockGradient)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <defs>
+                    <linearGradient id="stockGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#1d4ed8" />
+                    </linearGradient>
+                  </defs>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            <div className="bg-white p-5 rounded-xl shadow-md">
-              <h2 className="font-semibold mb-3">Color Breakdown</h2>
-              <ResponsiveContainer width="100%" height={200}>
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Material Distribution</h2>
+              <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
                     data={colorData}
@@ -357,8 +404,9 @@ export default function InventoryDashboard() {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={70}
-                    label
+                    outerRadius={80}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
                   >
                     {colorData.map((entry, index) => (
                       <Cell
@@ -367,7 +415,14 @@ export default function InventoryDashboard() {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>

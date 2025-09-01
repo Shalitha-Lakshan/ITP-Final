@@ -52,7 +52,7 @@ function App() {
         <Route path="/payments" element={<PaymentDashboard />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/support" element={<HelpCenter />} />
+        <Route path="/help" element={<HelpCenter />} />
 
         
 

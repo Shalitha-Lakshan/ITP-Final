@@ -177,11 +177,11 @@ export default function InventoryMaterials() {
       <aside className="w-72 bg-white shadow-xl border-r border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
               <CubeIcon className="text-white w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">EcoCycle Inventory</h2>
+              <h2 className="text-xl font-bold text-gray-900">Inventory Hub</h2>
               <p className="text-sm text-gray-500">Raw Materials</p>
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function InventoryMaterials() {
           </Link>
           <Link
             to="/inventory/materials"
-            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-green-600 text-white shadow-lg"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
           >
             <ArrowTrendingUpIcon className="w-5 h-5" />
             <span className="font-medium">Raw Materials</span>
