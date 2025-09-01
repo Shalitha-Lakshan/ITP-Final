@@ -14,6 +14,8 @@ import InventorySorting from "./components/Inventory/InventorySorting";
 import ReportPage from "./components/Inventory/ReportPage";
 import ProductionDashboard from "./components/Production/ProductionDashboard";
 import FinanceDashboard from "./components/finance/FinanceDashboard";
+import SalesDashboard from "./components/sales/SalesDashboard";
+import PaymentDashboard from "./components/payments/PaymentDashboard";
 
 
 
@@ -37,6 +39,8 @@ function App() {
         <Route path="/inventory/reports" element={<ReportPage />} />
         <Route path="/production" element={<ProductionDashboard />} />
         <Route path="/finance" element={<FinanceDashboard />} />
+        <Route path="/sales" element={<SalesDashboard />} />
+        <Route path="/payments" element={<PaymentDashboard />} />
 
         
 
