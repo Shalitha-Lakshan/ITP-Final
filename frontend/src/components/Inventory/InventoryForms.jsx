@@ -89,8 +89,8 @@ export default function InventoryForms() {
           <Link to="/inventory/forms" className="flex items-center gap-2 bg-green-700 p-2 rounded-lg transition">
             <CubeIcon className="w-5 h-5" /> Inventory Forms
           </Link>
-          <Link to="/inventory/sorting" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg">
-            <ArrowTrendingUpIcon className="w-5 h-5" /> Sorting
+          <Link to="/inventory/materials" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg">
+            <ArrowTrendingUpIcon className="w-5 h-5" /> Raw Materials
           </Link>
           <Link to="/inventory/reports" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition">
             <DocumentChartBarIcon className="w-5 h-5" /> Reports

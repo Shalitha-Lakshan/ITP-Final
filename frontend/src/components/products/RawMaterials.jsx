@@ -83,7 +83,7 @@ export default function RowMaterials() {
           </Link>
 
           <Link
-            to="/raw-materials"
+            to="/inventory/materials"
             className="flex items-center space-x-2 p-2 rounded-lg w-full hover:bg-green-700 bg-green-700"
           >
             <Package /> <span>Raw Materials</span>

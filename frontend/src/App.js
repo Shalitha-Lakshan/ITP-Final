@@ -13,6 +13,10 @@ import InventoryForms from "./components/Inventory/InventoryForms";
 import InventorySorting from "./components/Inventory/InventorySorting";
 import ReportPage from "./components/Inventory/ReportPage";
 import ProductionDashboard from "./components/Production/ProductionDashboard";
+import Products from "./components/products/Products";
+import RawMaterials from "./components/products/RawMaterials";
+import InventoryMaterials from "./components/Inventory/InventoryMaterials";
+
 
 
 
@@ -34,7 +38,10 @@ function App() {
         <Route path="/inventory/forms" element={<InventoryForms />} />
         <Route path="/inventory/sorting" element={<InventorySorting />} />
         <Route path="/inventory/reports" element={<ReportPage />} />
-        <Route path="/production" element={<ProductionDashboard />} />
+        <Route path="/production/dashboard" element={<ProductionDashboard />} />
+        <Route path="/production/product" element={<Products/>} />
+        <Route path="/raw-materials" element={<RawMaterials/>} />
+        <Route path="/inventory/materials" element={<InventoryMaterials/>} />
         
 
       </Routes>

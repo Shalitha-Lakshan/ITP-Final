@@ -1,25 +1,28 @@
-// pass = ZL7IayqbTspqb2rd
-const express = require("express");
-const mongoose = require("mongoose");
-const router = require("./Routes/UserRoutes");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import path from "path";
 
 const app = express();
 
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-// Middleware
-app.use(express.json()); 
-app.use("/users", router); 
+// 🟢 Static file serving (Images)
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
+// --- routes ---
+import inventoryRoutes from "./Routes/InventoryRoutes.js";
+app.use("/inventory", inventoryRoutes);
 
-
-// Connect to MongoDB
-mongoose.connect("mongodb+srv://admin:ZL7IayqbTspqb2rd@cluster0.hk1j2kb.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0")
-.then(() => console.log("Connected to MongoDB"))
-.then(() => {
-    // Start the server
-    app.listen(5000);
-})
-.catch(err => console.error("Failed to connect to MongoDB", err));
-
-
-
+// Connect DB & Start Server
+mongoose
+  .connect("mongodb+srv://admin:PQiukNPIiWtkL4eU@cluster0.hm0ymbf.mongodb.net/")
+  .then(() => {
+    console.log("✅ MongoDB Connected");
+    app.listen(5000, () => {
+      console.log("🚀 Server running on http://localhost:5000");
+    });
+  })
+  .catch((err) => console.error(err));
