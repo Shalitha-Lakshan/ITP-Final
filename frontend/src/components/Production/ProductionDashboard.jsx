@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+
 import {
   BarChart,
   Bar,
@@ -164,37 +166,65 @@ const ProductionDashboard = () => {
   return (
     <div className="flex h-screen bg-gray-100 text-gray-800">
       {/* Sidebar */}
-      <aside className="w-64 bg-green-600 text-white flex flex-col">
+        <aside className="w-64 bg-green-600 text-white flex flex-col">
         <div className="p-6 text-xl font-bold flex items-center space-x-2 border-b border-green-700">
-          <Factory className="text-white" />
-          <span>Manufacturer</span>
+            <Factory className="text-white" />
+            <span>Manufacturer</span>
         </div>
         <nav className="flex-1 p-4 space-y-3">
-          <button className="flex items-center space-x-2 p-2 hover:bg-green-700 rounded-lg w-full text-left">
+            <Link
+            to="/production/dashboard"
+            className="flex items-center space-x-2 p-2 rounded-lg w-full hover:bg-green-700"
+            >
             <LayoutDashboard /> <span>Dashboard</span>
-          </button>
-          <button className="flex items-center space-x-2 p-2 hover:bg-green-700 rounded-lg w-full text-left">
+            </Link>
+
+            <Link
+            to="/production/product"
+            className="flex items-center space-x-2 p-2 rounded-lg w-full hover:bg-green-700"
+            >
             <Boxes /> <span>Products</span>
-          </button>
-          <button className="flex items-center space-x-2 p-2 hover:bg-green-700 rounded-lg w-full text-left">
+            </Link>
+
+            <Link
+            to="/raw-materials"
+            className="flex items-center space-x-2 p-2 rounded-lg w-full hover:bg-green-700"
+            >
             <Package /> <span>Raw Materials</span>
-          </button>
-          <button className="flex items-center space-x-2 p-2 hover:bg-green-700 rounded-lg w-full text-left">
+            </Link>
+
+            <Link
+            to="/production"
+            className="flex items-center space-x-2 p-2 rounded-lg w-full hover:bg-green-700"
+            >
             <Factory /> <span>Production</span>
-          </button>
-          <button className="flex items-center space-x-2 p-2 hover:bg-green-700 rounded-lg w-full text-left">
+            </Link>
+
+            <Link
+            to="/production/reports"
+            className="flex items-center space-x-2 p-2 rounded-lg w-full hover:bg-green-700"
+            >
             <FileText /> <span>Reports</span>
-          </button>
-          <button className="flex items-center space-x-2 p-2 hover:bg-green-700 rounded-lg w-full text-left">
+            </Link>
+
+            <Link
+            to="/production/settings"
+            className="flex items-center space-x-2 p-2 rounded-lg w-full hover:bg-green-700"
+            >
             <Settings /> <span>Settings</span>
-          </button>
+            </Link>
         </nav>
+
         <div className="p-4 border-t border-green-700">
-          <button className="flex items-center space-x-2 p-2 hover:bg-red-600 rounded-lg w-full text-left text-red-600 hover:text-white">
+            <Link
+            to="/logout"
+            className="flex items-center space-x-2 p-2 hover:bg-red-600 rounded-lg w-full text-left text-red-600 hover:text-white"
+            >
             <LogOut /> <span>Logout</span>
-          </button>
+            </Link>
         </div>
-      </aside>
+        </aside>
+
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
