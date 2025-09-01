@@ -112,86 +112,108 @@ export default function InventoryDashboard() {
   const COLORS = ["#4CAF50", "#2196F3", "#FF9800", "#9C27B0"];
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="bg-green-600 text-white w-64 p-6 shadow-lg">
-        <h2 className="text-2xl font-bold mb-8">EcoCycle</h2>
-        <nav className="space-y-4">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Enhanced Sidebar */}
+      <aside className="w-72 bg-white shadow-xl border-r border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
+              <CubeIcon className="text-white w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">EcoCycle Inventory</h2>
+              <p className="text-sm text-gray-500">Waste Management System</p>
+            </div>
+          </div>
+        </div>
+        
+        <nav className="p-4 space-y-2">
           <Link
             to="/inventory"
-            className="flex items-center gap-2 bg-green-700 p-2 rounded-lg transition"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-green-600 text-white shadow-lg"
           >
-            <ChartBarIcon className="w-5 h-5" /> Dashboard
+            <ChartBarIcon className="w-5 h-5" />
+            <span className="font-medium">Dashboard</span>
           </Link>
           <Link
             to="/inventory/forms"
-            className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
           >
-            <CubeIcon className="w-5 h-5" /> Inventory Forms
+            <CubeIcon className="w-5 h-5" />
+            <span className="font-medium">Inventory Forms</span>
           </Link>
           <Link
             to="/inventory/materials"
-            className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
           >
-            <ArrowTrendingUpIcon className="w-5 h-5" /> Raw Materials
+            <ArrowTrendingUpIcon className="w-5 h-5" />
+            <span className="font-medium">Raw Materials</span>
           </Link>
           <Link
             to="/inventory/reports"
-            className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition"
+            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
           >
-            <DocumentChartBarIcon className="w-5 h-5" /> Reports
+            <DocumentChartBarIcon className="w-5 h-5" />
+            <span className="font-medium">Reports</span>
           </Link>
         </nav>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="flex justify-between items-start mb-6 relative">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Inventory Management</h1>
-            <p className="text-gray-500">Track and manage recyclable materials</p>
-          </div>
-
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative">
-              <img
-                src={profilePic || "https://via.placeholder.com/40"}
-                alt="Profile"
-                className="w-10 h-10 rounded-full border cursor-pointer hover:ring-2 hover:ring-green-500"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-              />
-              {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-10">
-                  <label
-                    htmlFor="upload-profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                  >
-                    Upload Picture
-                  </label>
-                  <input
-                    type="file"
-                    id="upload-profile"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleProfileUpload}
-                  />
-                  <Link
-                    to="/inventory/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    View Profile
-                  </Link>
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                    onClick={() => alert("Logged out")}
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        {/* Enhanced Header */}
+        <header className="bg-white border-b border-gray-200 p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Inventory Dashboard</h1>
+              <p className="text-gray-600 mt-1">Track and manage recyclable materials</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <img
+                  src={profilePic || "https://via.placeholder.com/40"}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border cursor-pointer hover:ring-2 hover:ring-green-500"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                />
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-10">
+                    <label
+                      htmlFor="upload-profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                    >
+                      Upload Picture
+                    </label>
+                    <input
+                      type="file"
+                      id="upload-profile"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleProfileUpload}
+                    />
+                    <Link
+                      to="/inventory/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      View Profile
+                    </Link>
+                    <button
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      onClick={() => alert("Logged out")}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button className="bg-green-600 text-white px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                + Add Item
+              </button>
             </div>
           </div>
-        </div>
+        </header>
+
+        <div className="p-6">
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
@@ -351,7 +373,8 @@ export default function InventoryDashboard() {
             </div>
           </div>
         </div>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

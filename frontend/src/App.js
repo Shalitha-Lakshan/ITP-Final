@@ -7,7 +7,6 @@ import AboutUs from "./pages/AboutUs";
 import Register from "./components/register/register";
 import Login from "./pages/Login";
 import InventoryDashboard from "./components/Inventory/InventoryDashboard";
-import FAQ from "./pages/FAQ";
 import InventoryProfile from "./components/Inventory/InventoryProfile";
 import InventoryForms from "./components/Inventory/InventoryForms";
 import InventorySorting from "./components/Inventory/InventorySorting";
@@ -19,6 +18,9 @@ import SalesDashboard from "./components/sales/SalesDashboard";
 import TransportDashboard from "./components/transport/TransportDashboard";
 import PaymentDashboard from "./components/payments/PaymentDashboard";
 import InventoryMaterials from "./components/Inventory/InventoryMaterials";
+import FAQ from "./components/business/FAQ";
+import Contact from "./components/business/Contact";
+import HelpCenter from "./components/business/HelpCenter";
 
 
 
@@ -37,18 +39,20 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/inventory" element={<InventoryDashboard />} />
-        <Route path="/faq" element={<FAQ />} />
         <Route path="/inventory/profile" element={<InventoryProfile />} />
         <Route path="/inventory/forms" element={<InventoryForms />} />
         <Route path="/inventory/sorting" element={<InventorySorting />} />
         <Route path="/inventory/reports" element={<ReportPage />} />
+        <Route path="/inventory/materials" element={<InventoryMaterials />} />
         <Route path="/production" element={<ProductionDashboard />} />
         <Route path="/finance" element={<FinanceDashboard />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/sales" element={<SalesDashboard />} />
         <Route path="/transport" element={<TransportDashboard />} />
         <Route path="/payments" element={<PaymentDashboard />} />
-        <Route path="/inventory/materials" element={<InventoryMaterials />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/support" element={<HelpCenter />} />
 
         
 
