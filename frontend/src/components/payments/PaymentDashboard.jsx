@@ -336,38 +336,65 @@ export default function PaymentDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md p-6">
-        <h2 className="text-2xl font-bold mb-8">Payments</h2>
-        <nav className="flex flex-col space-y-4">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Enhanced Sidebar */}
+      <aside className="w-72 bg-white shadow-xl border-r border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <CreditCard className="text-white" size={20} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Payment Hub</h2>
+              <p className="text-sm text-gray-500">Transaction Management</p>
+            </div>
+          </div>
+        </div>
+        
+        <nav className="p-4 space-y-2">
           {menuItems.map((item) => (
-            <div
+            <button
               key={item.key}
               onClick={() => setActiveTab(item.key)}
-              className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                activeTab === item.key ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
+              className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${
+                activeTab === item.key
+                  ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               {item.icon}
-              <span>{item.name}</span>
-            </div>
+              <span className="font-medium">{item.name}</span>
+            </button>
           ))}
         </nav>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Payment Dashboard</h1>
-          <div className="flex space-x-3">
-            <Button variant="outline">Export Report</Button>
-            <Button className="bg-green-600 text-white"><Plus size={16} className="mr-2" />Process Payment</Button>
+      <div className="flex-1 overflow-auto">
+        {/* Enhanced Header */}
+        <header className="bg-white border-b border-gray-200 p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Payment Dashboard</h1>
+              <p className="text-gray-600 mt-1">Payment processing and transaction management</p>
+            </div>
+            <div className="flex space-x-3">
+              <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                <Search size={16} className="mr-2" />Search
+              </Button>
+              <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                <Filter size={16} className="mr-2" />Filter
+              </Button>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                <Plus size={16} className="mr-2" />New Payment
+              </Button>
+            </div>
           </div>
-        </div>
+        </header>
 
-        {renderContent()}
+        <div className="p-6">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

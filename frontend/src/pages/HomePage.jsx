@@ -12,124 +12,240 @@ function HomePage() {
       <Features />
       <Stats />
 
-      {/* How It Works Section */}
-      <section className="py-20 bg-gray-50 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl text-gray-900">
-              How It Works
+      {/* How It Works Section - Professional Redesign */}
+      <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50 to-green-50 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] opacity-25"></div>
+        
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-800 text-sm font-medium mb-6">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+              Simple Process
+            </div>
+            <h2 className="text-5xl md:text-6xl font-bold tracking-tight text-gray-900 mb-6">
+              How It <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600">Works</span>
             </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Join our recycling ecosystem in just a few simple steps
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Transform your recycling habits with our intelligent ecosystem. 
+              Four simple steps to make a lasting environmental impact.
             </p>
           </div>
 
           <div className="relative">
-            {/* Timeline line */}
-            <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-green-100 rounded"></div>
-
-            <div className="space-y-20 relative">
-              {/* Step 1 */}
-              <div className="flex flex-col md:flex-row items-center">
-                <div className="flex-1 md:text-right md:pr-12">
-                  <h3 className="text-2xl font-semibold text-green-700">
-                    Step 1: Register
-                  </h3>
-                  <p className="mt-3 text-gray-600 text-lg">
-                    Create your free EcoRecycle account to start tracking your
-                    recycling efforts and earning points.
-                  </p>
-                </div>
-                <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-green-600 rounded-full h-14 w-14 flex items-center justify-center text-white font-bold shadow-lg border-4 border-white">
-                  1
-                </div>
-                <div className="flex-1 md:pl-12 mt-6 md:mt-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1520333789090-1afc82db536a"
-                    alt="Registration"
-                    className="rounded-xl shadow-lg w-full h-56 object-cover hover:scale-105 transition-transform"
-                  />
-                </div>
-              </div>
-
-              {/* Step 2 */}
-              <div className="flex flex-col md:flex-row items-center">
-                <div className="md:order-last flex-1 md:pl-12">
-                  <h3 className="text-2xl font-semibold text-green-700">
-                    Step 2: Find Smart Bins
-                  </h3>
-                  <p className="mt-3 text-gray-600 text-lg">
-                    Locate smart recycling bins near you using our app or
-                    website map.
-                  </p>
-                </div>
-                <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-green-600 rounded-full h-14 w-14 flex items-center justify-center text-white font-bold shadow-lg border-4 border-white">
-                  2
-                </div>
-                <div className="md:order-first flex-1 md:pr-12 mt-6 md:mt-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1621955964441-c173e01c135b"
-                    alt="Smart Bins"
-                    className="rounded-xl shadow-lg w-full h-56 object-cover hover:scale-105 transition-transform"
-                  />
-                </div>
-              </div>
-
-              {/* Step 3 */}
-              <div className="flex flex-col md:flex-row items-center">
-                <div className="flex-1 md:text-right md:pr-12">
-                  <h3 className="text-2xl font-semibold text-green-700">
-                    Step 3: Deposit Bottles
-                  </h3>
-                  <p className="mt-3 text-gray-600 text-lg">
-                    Scan the QR code on the bin with our app, then insert your
-                    plastic bottles.
-                  </p>
-                </div>
-                <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-green-600 rounded-full h-14 w-14 flex items-center justify-center text-white font-bold shadow-lg border-4 border-white">
-                  3
-                </div>
-                <div className="flex-1 md:pl-12 mt-6 md:mt-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1611284446314-60a58ac0deb9"
-                    alt="Depositing Bottles"
-                    className="rounded-xl shadow-lg w-full h-56 object-cover hover:scale-105 transition-transform"
-                  />
+            {/* Enhanced Timeline */}
+            <div className="hidden lg:block absolute left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-gradient-to-b from-green-400 via-blue-500 to-green-600 rounded-full opacity-30"></div>
+            
+            <div className="space-y-24 relative">
+              {/* Step 1 - Enhanced */}
+              <div className="group">
+                <div className="flex flex-col lg:flex-row items-center">
+                  <div className="flex-1 lg:text-right lg:pr-16">
+                    <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100">
+                      <div className="flex items-center justify-center lg:justify-end mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                        Create Account
+                      </h3>
+                      <p className="text-gray-600 text-lg leading-relaxed">
+                        Join our community with a free account. Start tracking your environmental 
+                        impact and unlock exclusive rewards for sustainable living.
+                      </p>
+                      <div className="mt-6 flex items-center justify-center lg:justify-end">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                          Free Forever
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2 my-8 lg:my-0">
+                    <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-2xl border-4 border-white group-hover:scale-110 transition-transform duration-300">
+                      01
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 lg:pl-16">
+                    <div className="relative overflow-hidden rounded-2xl shadow-2xl group-hover:shadow-3xl transition-all duration-500">
+                      <img
+                        src="https://images.unsplash.com/photo-1520333789090-1afc82db536a"
+                        alt="User Registration"
+                        className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Step 4 */}
-              <div className="flex flex-col md:flex-row items-center">
-                <div className="md:order-last flex-1 md:pl-12">
-                  <h3 className="text-2xl font-semibold text-green-700">
-                    Step 4: Earn & Redeem
-                  </h3>
-                  <p className="mt-3 text-gray-600 text-lg">
-                    Earn points for each bottle recycled and redeem them for
-                    eco-friendly products.
-                  </p>
+              {/* Step 2 - Enhanced */}
+              <div className="group">
+                <div className="flex flex-col lg:flex-row items-center">
+                  <div className="lg:order-last flex-1 lg:pl-16">
+                    <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100">
+                      <div className="flex items-center justify-center lg:justify-start mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                        Locate Smart Bins
+                      </h3>
+                      <p className="text-gray-600 text-lg leading-relaxed">
+                        Use our intelligent mapping system to find the nearest smart recycling 
+                        bins. Real-time availability and route optimization included.
+                      </p>
+                      <div className="mt-6 flex items-center justify-center lg:justify-start">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                          GPS Enabled
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2 my-8 lg:my-0">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-2xl border-4 border-white group-hover:scale-110 transition-transform duration-300">
+                      02
+                    </div>
+                  </div>
+                  
+                  <div className="lg:order-first flex-1 lg:pr-16">
+                    <div className="relative overflow-hidden rounded-2xl shadow-2xl group-hover:shadow-3xl transition-all duration-500">
+                      <img
+                        src="https://images.unsplash.com/photo-1621955964441-c173e01c135b"
+                        alt="Smart Recycling Bins"
+                        className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
+                  </div>
                 </div>
-                <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-green-600 rounded-full h-14 w-14 flex items-center justify-center text-white font-bold shadow-lg border-4 border-white">
-                  4
+              </div>
+
+              {/* Step 3 - Enhanced */}
+              <div className="group">
+                <div className="flex flex-col lg:flex-row items-center">
+                  <div className="flex-1 lg:text-right lg:pr-16">
+                    <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100">
+                      <div className="flex items-center justify-center lg:justify-end mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V4a1 1 0 00-1-1H5a1 1 0 00-1 1v3a1 1 0 001 1zm12 0h2a1 1 0 001-1V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v3a1 1 0 001 1zM5 20h2a1 1 0 001-1v-3a1 1 0 00-1-1H5a1 1 0 00-1 1v3a1 1 0 001 1z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                        Scan & Deposit
+                      </h3>
+                      <p className="text-gray-600 text-lg leading-relaxed">
+                        Simply scan the QR code with our mobile app and deposit your bottles. 
+                        Our AI technology automatically sorts and counts your contribution.
+                      </p>
+                      <div className="mt-6 flex items-center justify-center lg:justify-end">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                          <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                          AI Powered
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2 my-8 lg:my-0">
+                    <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-2xl border-4 border-white group-hover:scale-110 transition-transform duration-300">
+                      03
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 lg:pl-16">
+                    <div className="relative overflow-hidden rounded-2xl shadow-2xl group-hover:shadow-3xl transition-all duration-500">
+                      <img
+                        src="https://images.unsplash.com/photo-1611284446314-60a58ac0deb9"
+                        alt="Bottle Deposit Process"
+                        className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
+                  </div>
                 </div>
-                <div className="md:order-first flex-1 md:pr-12 mt-6 md:mt-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1604689598793-b8bf1dc445a1"
-                    alt="Redeeming Points"
-                    className="rounded-xl shadow-lg w-full h-56 object-cover hover:scale-105 transition-transform"
-                  />
+              </div>
+
+              {/* Step 4 - Enhanced */}
+              <div className="group">
+                <div className="flex flex-col lg:flex-row items-center">
+                  <div className="lg:order-last flex-1 lg:pl-16">
+                    <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100">
+                      <div className="flex items-center justify-center lg:justify-start mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                        Earn Rewards
+                      </h3>
+                      <p className="text-gray-600 text-lg leading-relaxed">
+                        Earn points for every bottle recycled and redeem them for exclusive 
+                        eco-friendly products, discounts, and sustainable lifestyle rewards.
+                      </p>
+                      <div className="mt-6 flex items-center justify-center lg:justify-start">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                          <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                          Instant Rewards
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2 my-8 lg:my-0">
+                    <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-2xl border-4 border-white group-hover:scale-110 transition-transform duration-300">
+                      04
+                    </div>
+                  </div>
+                  
+                  <div className="lg:order-first flex-1 lg:pr-16">
+                    <div className="relative overflow-hidden rounded-2xl shadow-2xl group-hover:shadow-3xl transition-all duration-500">
+                      <img
+                        src="https://images.unsplash.com/photo-1604689598793-b8bf1dc445a1"
+                        alt="Reward System"
+                        className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-16 text-center">
-            <a
-              href="/register"
-              className="inline-flex items-center justify-center px-8 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg transition"
-            >
-              Join Now & Start Recycling
-            </a>
+          <div className="mt-20 text-center">
+            <div className="inline-flex flex-col sm:flex-row gap-4">
+              <a
+                href="/register"
+                className="group inline-flex items-center justify-center px-8 py-4 rounded-2xl text-white font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <span>Start Your Journey</span>
+                <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </a>
+              <a
+                href="/user-dashboard"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-2xl text-gray-700 font-semibold bg-white border-2 border-gray-200 hover:border-green-300 hover:bg-green-50 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                View Dashboard Demo
+              </a>
+            </div>
           </div>
         </div>
       </section>

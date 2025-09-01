@@ -107,7 +107,7 @@ export default function ReportPage() {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className="bg-green-600 text-white w-64 p-6 shadow-lg">
-        <h2 className="text-2xl font-bold mb-8">EcoRecycle</h2>
+        <h2 className="text-2xl font-bold mb-8">EcoCycle</h2>
         <nav className="space-y-4">
           <Link to="/inventory" className="flex items-center gap-2 hover:bg-green-700 p-2 rounded-lg transition">
             <ChartBarIcon className="w-5 h-5" /> Dashboard

@@ -1,14 +1,24 @@
 // pass = ZL7IayqbTspqb2rd
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 const router = require("./Routes/UserRoutes");
+const salesRoutes = require("./Routes/SalesRoutes");
+const paymentRoutes = require("./Routes/PaymentRoutes");
+const transportRoutes = require("./Routes/TransportRoutes");
+const userDashboardRoutes = require("./Routes/UserDashboardRoutes");
 
 const app = express();
 
 
 // Middleware
+app.use(cors());
 app.use(express.json()); 
-app.use("/users", router); 
+app.use("/users", router);
+app.use("/api/sales", salesRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/transport", transportRoutes);
+app.use("/api/user", userDashboardRoutes); 
 
 
 
