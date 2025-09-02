@@ -12,7 +12,18 @@ const {
   updateInvoiceStatus,
   getAllPaymentMethods,
   createPaymentMethod,
-  updatePaymentMethod
+  updatePaymentMethod,
+  getFinanceOverview,
+  getChartData,
+  getAllEmployees,
+  createEmployee,
+  updateEmployee,
+  deleteEmployee,
+  getAllPayments,
+  createPayment,
+  updatePayment,
+  deletePayment,
+  updatePaymentStatus
 } = require('../Controllers/PaymentController');
 
 // Payment Transaction Routes
@@ -34,5 +45,22 @@ router.put('/invoices/:id/status', updateInvoiceStatus);
 router.get('/methods', getAllPaymentMethods);
 router.post('/methods', createPaymentMethod);
 router.put('/methods/:id', updatePaymentMethod);
+
+// Finance Dashboard Routes
+router.get('/overview', getFinanceOverview);
+router.get('/charts', getChartData);
+
+// Employee Management Routes
+router.get('/employees', getAllEmployees);
+router.post('/employees', createEmployee);
+router.put('/employees/:id', updateEmployee);
+router.delete('/employees/:id', deleteEmployee);
+
+// Payment CRUD Routes
+router.get('/payments', getAllPayments);
+router.post('/payments', createPayment);
+router.put('/payments/:id', updatePayment);
+router.delete('/payments/:id', deletePayment);
+router.patch('/payments/:id/status', updatePaymentStatus);
 
 module.exports = router;

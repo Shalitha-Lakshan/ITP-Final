@@ -11,6 +11,11 @@ import {
   Clock, XCircle, Plus, Search
 } from "lucide-react";
 import EmployeePayroll from "./EmployeePayroll";
+import OverviewCards from "./OverviewCards";
+import FinanceCharts from "./FinanceCharts";
+import CustomerPaymentsManagement from "./CustomerPaymentsManagement";
+import EmployeePaymentsManagement from "./EmployeePaymentsManagement";
+import PaymentCRUD from "./PaymentCRUD";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import LogoutButton from "../common/LogoutButton";
@@ -30,126 +35,16 @@ export default function UnifiedFinanceDashboard() {
   const tabs = [
     { id: "overview", name: "Financial Overview", icon: <DollarSign size={20} /> },
     { id: "analytics", name: "Financial Analytics", icon: <TrendingUp size={20} /> },
-    { id: "payments", name: "Payment Management", icon: <CreditCard size={20} /> },
-    { id: "transactions", name: "Transaction History", icon: <FileText size={20} /> },
-    { id: "pending", name: "Pending Payments", icon: <Clock size={20} /> },
-    { id: "payroll", name: "Employee Payroll", icon: <Users size={20} /> },
+    { id: "customer-payments", name: "Customer Payments", icon: <CreditCard size={20} /> },
+    { id: "employee-payments", name: "Employee Payments", icon: <Users size={20} /> },
+    { id: "payment-crud", name: "Payment Records", icon: <FileText size={20} /> },
+    { id: "payroll", name: "Employee Payroll", icon: <Briefcase size={20} /> },
   ];
 
   const renderOverview = () => (
     <div className="space-y-8">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-700">Total Revenue</p>
-                <p className="text-3xl font-bold text-blue-900">LKR 0</p>
-                <p className="text-sm text-blue-600 flex items-center mt-1">
-                  <ArrowUpRight size={16} className="mr-1" />
-                  +12.5% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                <DollarSign className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-700">Net Profit</p>
-                <p className="text-3xl font-bold text-green-900">LKR 0</p>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  <ArrowUpRight size={16} className="mr-1" />
-                  +8.2% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
-                <TrendingUp className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-700">Payments Received</p>
-                <p className="text-3xl font-bold text-purple-900">LKR 0</p>
-                <p className="text-sm text-purple-600 flex items-center mt-1">
-                  <ArrowUpRight size={16} className="mr-1" />
-                  +15.3% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
-                <CreditCard className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-700">Pending Payments</p>
-                <p className="text-3xl font-bold text-orange-900">LKR 0</p>
-                <p className="text-sm text-orange-600 flex items-center mt-1">
-                  <ArrowDownRight size={16} className="mr-1" />
-                  -5.1% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center">
-                <Clock className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Revenue vs Expenses</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={revenueExpensesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="revenue" fill="#3B82F6" name="Revenue" />
-                <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Monthly Payments</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={monthlyPaymentData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area type="monotone" dataKey="received" stackId="1" stroke="#10B981" fill="#10B981" name="Received" />
-                <Area type="monotone" dataKey="pending" stackId="1" stroke="#F59E0B" fill="#F59E0B" name="Pending" />
-                <Area type="monotone" dataKey="failed" stackId="1" stroke="#EF4444" fill="#EF4444" name="Failed" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      <OverviewCards />
+      <FinanceCharts />
     </div>
   );
 
@@ -372,12 +267,12 @@ export default function UnifiedFinanceDashboard() {
         return renderOverview();
       case "analytics":
         return renderAnalytics();
-      case "payments":
-        return renderPayments();
-      case "transactions":
-        return renderTransactions();
-      case "pending":
-        return renderPendingPayments();
+      case "customer-payments":
+        return <CustomerPaymentsManagement />;
+      case "employee-payments":
+        return <EmployeePaymentsManagement />;
+      case "payment-crud":
+        return <PaymentCRUD />;
       case "payroll":
         return <EmployeePayroll />;
       default:
