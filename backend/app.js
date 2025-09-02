@@ -3,11 +3,12 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
-
 const app = express();
 
 // Import routes
 const userRoutes = require("./Routes/UserRoutes");
+const inventoryRoutes = require("./Routes/InventoryRoutes");
+const productionRequestRoutes = require("./Routes/ProductionRequestRoutes");
 
 // CORS Configuration
 const corsOptions = {
@@ -24,9 +25,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
 app.use("/api/users", userRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/production-requests", productionRequestRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -80,7 +84,10 @@ mongoose.connect("mongodb+srv://admin:ZL7IayqbTspqb2rd@cluster0.hk1j2kb.mongodb.
 .then(() => console.log("Connected to MongoDB"))
 .then(() => {
     // Start the server
-    app.listen(5000);
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
 })
 .catch(err => console.error("Failed to connect to MongoDB", err));
 

@@ -25,75 +25,62 @@ import {
 
 export default function InventoryDashboard() {
   const [inventory, setInventory] = useState([]);
-  const [requests, setRequests] = useState([
-    {
-      id: 1,
-      team: "Production A",
-      item: "Clear PET Bottles",
-      qty: 5000,
-      status: "Pending",
-    },
-    {
-      id: 2,
-      team: "Production B",
-      item: "Recycled PET Powder",
-      qty: 2000,
-      status: "Pending",
-    },
-    {
-      id: 3,
-      team: "Production C",
-      item: "Green HDPE Bottles",
-      qty: 3000,
-      status: "Accepted",
-    },
-  ]);
+  const [requests, setRequests] = useState([]);
 
   const [profilePic, setProfilePic] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     fetchInventory();
+    fetchProductionRequests();
+    // Auto-refresh every 30 seconds to show new items
+    const interval = setInterval(() => {
+      fetchInventory();
+      fetchProductionRequests();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchInventory = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/inventory");
+      const res = await axios.get("http://localhost:5000/api/inventory");
       setInventory(res.data);
     } catch (err) {
       console.error("Failed to fetch inventory:", err);
     }
   };
 
+  const fetchProductionRequests = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/production-requests");
+      setRequests(res.data);
+    } catch (err) {
+      console.error("Failed to fetch production requests:", err);
+    }
+  };
+
+  const handleRequestAction = async (requestId, action, approvedBy = "Inventory Manager") => {
+    try {
+      await axios.put(`http://localhost:5000/api/production-requests/${requestId}/status`, {
+        status: action,
+        approvedBy: approvedBy
+      });
+      
+      // Refresh both requests and inventory data
+      await fetchProductionRequests();
+      await fetchInventory();
+      
+      alert(`Request ${action.toLowerCase()} successfully!`);
+    } catch (err) {
+      console.error(`Failed to ${action.toLowerCase()} request:`, err);
+      alert(`Failed to ${action.toLowerCase()} request. Please try again.`);
+    }
+  };
+
   const handleProfileUpload = (e) => {
     const file = e.target.files[0];
     if (file) setProfilePic(URL.createObjectURL(file));
-  };
-
-  const handleRequestAction = (id, action) => {
-    setRequests((prev) =>
-      prev.map((req) => {
-        if (req.id === id) {
-          if (action === "Accepted") {
-            const invIndex = inventory.findIndex((i) => i.name === req.item);
-            if (invIndex !== -1 && inventory[invIndex].stock >= req.qty) {
-              const updatedInventory = [...inventory];
-              updatedInventory[invIndex] = {
-                ...updatedInventory[invIndex],
-                stock: updatedInventory[invIndex].stock - req.qty,
-              };
-              setInventory(updatedInventory);
-              return { ...req, status: "Accepted" };
-            } else {
-              alert(`Not enough stock of ${req.item} to accept request!`);
-              return req;
-            }
-          }
-          if (action === "Rejected") return { ...req, status: "Rejected" };
-        }
-        return req;
-      })
-    );
   };
 
   const totalWeight = inventory.reduce((sum, i) => sum + i.weight, 0);
@@ -278,19 +265,16 @@ export default function InventoryDashboard() {
           <div className="space-y-4">
             {requests.map((req) => (
               <div
-                key={req.id}
-                className="flex justify-between items-center border border-gray-200 p-4 rounded-xl hover:shadow-md transition-all duration-200"
+                key={req._id}
+                className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border border-gray-200 hover:shadow-lg transition-all duration-300"
               >
-                <div>
-                  <p className="font-semibold text-gray-900">{req.team}</p>
-                  <p className="text-sm text-gray-600">
-                    {req.qty} units of {req.item}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-gray-800">{req.team}</span>
                   <span
-                    className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-2 ${
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
                       req.status === "Pending"
-                        ? "bg-orange-100 text-orange-700"
-                        : req.status === "Accepted"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : req.status === "Approved"
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
                     }`}
@@ -298,20 +282,28 @@ export default function InventoryDashboard() {
                     {req.status}
                   </span>
                 </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleRequestAction(req.id, "Accepted")}
-                    className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transition-all duration-200"
-                  >
-                    <CheckIcon className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleRequestAction(req.id, "Rejected")}
-                    className="p-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg transition-all duration-200"
-                  >
-                    <XMarkIcon className="w-4 h-4" />
-                  </button>
+                <div className="text-sm text-gray-600 mb-2">
+                  <p><strong>Item:</strong> {req.inventoryItemId?.name || 'Unknown Item'}</p>
+                  <p><strong>Quantity:</strong> {req.requestedQty}</p>
+                  <p><strong>Priority:</strong> {req.priority}</p>
+                  {req.notes && <p><strong>Notes:</strong> {req.notes}</p>}
                 </div>
+                {req.status === "Pending" && (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleRequestAction(req._id, "Approved")}
+                      className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transition-all duration-200"
+                    >
+                      <CheckIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleRequestAction(req._id, "Rejected")}
+                      className="p-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:shadow-lg transition-all duration-200"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -322,12 +314,16 @@ export default function InventoryDashboard() {
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
             {inventory.map((item) => (
               <div key={item._id} className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
-                {item.imageUrl && (
+                {item.imageUrl ? (
                   <img
                     src={`http://localhost:5000${item.imageUrl}`}
                     alt={item.name}
                     className="w-full h-48 object-cover rounded-xl mb-4"
                   />
+                ) : (
+                  <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl mb-4 flex items-center justify-center">
+                    <CubeIcon className="w-16 h-16 text-gray-400" />
+                  </div>
                 )}
                 <h2 className="text-xl font-bold text-gray-900 mb-2">{item.name}</h2>
                 <p className="text-sm text-gray-500 mb-3">

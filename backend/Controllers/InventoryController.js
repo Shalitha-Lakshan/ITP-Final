@@ -12,27 +12,46 @@ const generateItemCode = async () => {
 // Add inventory item
 exports.addInventory = async (req, res) => {
   try {
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+    
     const { name, color, type, weight, stock, lastUpdated } = req.body;
+    
+    // Validate required fields
+    if (!name || !color || !type || !weight || !stock) {
+      return res.status(400).json({ 
+        message: "Missing required fields", 
+        required: ["name", "color", "type", "weight", "stock"],
+        received: { name, color, type, weight, stock }
+      });
+    }
+
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
     const itemCode = await generateItemCode();
 
     const newItem = new Inventory({
       itemCode,
-      name,
-      color,
-      type,
+      name: name.trim(),
+      color: color.trim(),
+      type: type.trim(),
       weight: parseFloat(weight),
       stock: parseInt(stock),
-      lastUpdated: lastUpdated
-        ? new Date(lastUpdated).toISOString()
-        : new Date().toISOString(),
+      lastUpdated: lastUpdated || new Date().toISOString(),
       imageUrl,
     });
 
-    await newItem.save();
-    res.status(201).json(newItem);
+    console.log("Attempting to save item:", newItem);
+    const savedItem = await newItem.save();
+    console.log("Item saved successfully:", savedItem);
+    
+    res.status(201).json(savedItem);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error saving inventory item:", err);
+    res.status(500).json({ 
+      message: err.message,
+      error: err.name,
+      details: err.errors || null
+    });
   }
 };
 

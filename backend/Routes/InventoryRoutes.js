@@ -39,31 +39,45 @@ router.get("/", async (req, res) => {
 // ➕ Add new inventory item
 router.post("/add", upload.single("image"), async (req, res) => {
   try {
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+    
     const { name, color, type, weight, stock, lastUpdated } = req.body;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-    if (!name || !color || !type || !weight || !stock || !lastUpdated || !imageUrl) {
-      return res.status(400).json({ message: "All fields are required" });
+    // Validate required fields (image is optional now)
+    if (!name || !color || !type || !weight || !stock) {
+      return res.status(400).json({ 
+        message: "Missing required fields",
+        required: ["name", "color", "type", "weight", "stock"],
+        received: { name, color, type, weight, stock }
+      });
     }
 
     const itemCode = await generateItemCode();
 
     const newItem = new Inventory({
       itemCode,
-      name,
-      color,
-      type,
-      weight,
-      stock,
-      lastUpdated,
+      name: name.trim(),
+      color: color.trim(),
+      type: type.trim(),
+      weight: parseFloat(weight),
+      stock: parseInt(stock),
+      lastUpdated: lastUpdated || new Date().toISOString(),
       imageUrl,
     });
 
+    console.log("Attempting to save item:", newItem);
     const savedItem = await newItem.save();
+    console.log("Item saved successfully:", savedItem);
+    
     res.status(201).json(savedItem);
   } catch (err) {
     console.error("Error adding inventory:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      error: err.message,
+      details: err.errors || null
+    });
   }
 });
 

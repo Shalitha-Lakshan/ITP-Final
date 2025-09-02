@@ -8,8 +8,8 @@ const inventorySchema = new mongoose.Schema(
     type: { type: String, required: true }, // processed form
     weight: { type: Number, required: true },
     stock: { type: Number, required: true },
-    lastUpdated: { type: String, required: true },
-    imageUrl: { type: String, required: true }, // e.g. /uploads/xxxx.png
+    lastUpdated: { type: String, default: () => new Date().toISOString() },
+    imageUrl: { type: String, default: null }, // Optional image
   },
   {
     timestamps: true,
