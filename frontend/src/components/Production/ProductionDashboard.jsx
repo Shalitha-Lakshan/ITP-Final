@@ -1,6 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
-
+import {
+  LayoutDashboard,
+  Factory,
+  Package,
+  Settings,
+  TrendingUp,
+  FileText,
+  Search,
+  Plus,
+  AlertTriangle,
+  Users,
+  Clock,
+  CheckCircle,
+  XCircle,
+  BarChart3,
+  ShoppingCart,
+  LogOut,
+  PackagePlus,
+  DollarSign,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -8,28 +28,28 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
   LineChart,
   Line,
+  Legend,
 } from "recharts";
-import {
-  Package,
-  TrendingUp,
-  DollarSign,
-  AlertTriangle,
-  LayoutDashboard,
-  Boxes,
-  FileText,
-  Factory,
-  Settings,
-  PackagePlus,
-  LogOut,
-  Search,
-} from "lucide-react";
 
 const ProductionDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [acceptedMaterials, setAcceptedMaterials] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [requestForm, setRequestForm] = useState({
+    team: '',
+    requestedQty: '',
+    notes: '',
+    priority: 'Medium'
+  });
 
   // Production vs Sales data for analytics
   const productionData = [
@@ -154,6 +174,110 @@ const ProductionDashboard = () => {
     { id: 3, name: "Shredder #1", status: "Running", efficiency: 88, lastMaintenance: "2025-08-20" },
     { id: 4, name: "Washing Unit #1", status: "Running", efficiency: 92, lastMaintenance: "2025-08-25" },
   ];
+
+  // Fetch inventory data
+  const fetchInventoryData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:5000/api/inventory');
+      setInventoryItems(response.data);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create production request
+  const createProductionRequest = async () => {
+    try {
+      // First check if backend server is running
+      try {
+        await axios.get('http://localhost:5000/api/health');
+      } catch (healthError) {
+        alert('Backend server is not running. Please start the backend server first.');
+        return;
+      }
+
+      const requestData = {
+        team: requestForm.team,
+        inventoryItemId: selectedItem._id,
+        requestedQty: parseInt(requestForm.requestedQty),
+        notes: requestForm.notes,
+        priority: requestForm.priority
+      };
+
+      console.log('Sending request data:', requestData);
+      console.log('Selected item:', selectedItem);
+      
+      const response = await axios.post('http://localhost:5000/api/production-requests', requestData);
+      console.log('Request response:', response.data);
+      
+      // Reset form and close modal
+      setRequestForm({ team: '', requestedQty: '', notes: '', priority: 'Medium' });
+      setShowRequestModal(false);
+      setSelectedItem(null);
+      
+      alert('Production request created successfully!');
+    } catch (error) {
+      console.error('Error creating request:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Request data that failed:', {
+        team: requestForm.team,
+        inventoryItemId: selectedItem?._id,
+        requestedQty: requestForm.requestedQty,
+        notes: requestForm.notes,
+        priority: requestForm.priority
+      });
+      
+      let errorMessage = 'Failed to create production request. ';
+      
+      if (error.code === 'ECONNREFUSED') {
+        errorMessage += 'Cannot connect to backend server. Please ensure the backend server is running on port 5000.';
+      } else if (error.response?.status === 400) {
+        errorMessage += error.response.data?.message || 'Invalid request data.';
+      } else if (error.response?.status === 404) {
+        errorMessage += 'Inventory item not found.';
+      } else if (error.response?.data?.message) {
+        errorMessage += error.response.data.message;
+      } else {
+        errorMessage += 'Please check the console for more details and try again.';
+      }
+      
+      alert(errorMessage);
+    }
+  };
+
+  // Handle request form changes
+  const handleRequestFormChange = (e) => {
+    const { name, value } = e.target;
+    setRequestForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Open request modal
+  const openRequestModal = (item) => {
+    setSelectedItem(item);
+    setShowRequestModal(true);
+  };
+
+  // Fetch accepted materials
+  const fetchAcceptedMaterials = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/production-requests/status/Approved');
+      setAcceptedMaterials(response.data);
+    } catch (error) {
+      console.error('Error fetching accepted materials:', error);
+    }
+  };
+
+  // Load inventory data when materials tab is active
+  useEffect(() => {
+    if (activeTab === 'materials') {
+      fetchInventoryData();
+      fetchAcceptedMaterials();
+    }
+  }, [activeTab]);
 
   // Handle form input
   const handleChange = (e) => {
@@ -664,49 +788,235 @@ const ProductionDashboard = () => {
           {/* Raw Materials Tab */}
           {activeTab === "materials" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white shadow-lg rounded-2xl p-6">
-                  <h3 className="text-lg font-bold mb-4">Material Inventory</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span>PET Bottles</span>
-                      <span className="font-bold">2,500 kg</span>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Raw Materials Inventory</h2>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => {
+                      fetchInventoryData();
+                      fetchAcceptedMaterials();
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                  >
+                    <Package size={18} />
+                    <span>Refresh Data</span>
+                  </button>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <>
+                  {/* Inventory Items Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {inventoryItems.map((item) => (
+                      <div key={item._id} className="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl transition-shadow">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
+                            <p className="text-sm text-gray-500">Code: {item.itemCode}</p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            item.stock < 100 ? 'bg-red-100 text-red-800' :
+                            item.stock < 500 ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {item.stock < 100 ? 'Low Stock' :
+                             item.stock < 500 ? 'Medium Stock' : 'High Stock'}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-2 mb-4">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Type:</span>
+                            <span className="font-medium">{item.type}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Color:</span>
+                            <span className="font-medium">{item.color}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Weight:</span>
+                            <span className="font-medium">{item.weight} kg</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Stock:</span>
+                            <span className="font-bold text-lg">{item.stock} units</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => openRequestModal(item)}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                        >
+                          <ShoppingCart size={16} />
+                          <span>Request Material</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {inventoryItems.length === 0 && (
+                    <div className="text-center py-12">
+                      <Package size={48} className="mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-500">No inventory items found</p>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>Plastic Containers</span>
-                      <span className="font-bold">1,800 kg</span>
+                  )}
+
+                  {/* Accepted Materials Section */}
+                  {acceptedMaterials.length > 0 && (
+                    <div className="bg-white shadow-lg rounded-2xl p-6 mt-6">
+                      <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center">
+                        <CheckCircle className="mr-2" size={24} />
+                        Approved Materials Ready for Production
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {acceptedMaterials.map((material) => (
+                          <div key={material._id} className="bg-green-50 border border-green-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h4 className="font-bold text-gray-900">{material.inventoryItemId?.name || 'Unknown Item'}</h4>
+                                <p className="text-sm text-gray-600">Request ID: {material.requestId}</p>
+                              </div>
+                              <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                Approved
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Team:</span>
+                                <span className="font-medium">{material.team}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Quantity:</span>
+                                <span className="font-medium">{material.requestedQty} units</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Priority:</span>
+                                <span className={`font-medium ${
+                                  material.priority === 'High' ? 'text-red-600' :
+                                  material.priority === 'Medium' ? 'text-yellow-600' :
+                                  'text-green-600'
+                                }`}>
+                                  {material.priority}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Approved:</span>
+                                <span className="font-medium text-green-600">
+                                  {new Date(material.approvedDate).toLocaleDateString()} at{' '}
+                                  {new Date(material.approvedDate).toLocaleTimeString()}
+                                </span>
+                              </div>
+                              {material.approvedBy && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Approved by:</span>
+                                  <span className="font-medium">{material.approvedBy}</span>
+                                </div>
+                              )}
+                              {material.notes && (
+                                <div className="mt-2 pt-2 border-t border-green-200">
+                                  <p className="text-xs text-gray-600"><strong>Notes:</strong> {material.notes}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>Paper Waste</span>
-                      <span className="font-bold">3,200 kg</span>
-                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Production Request Modal */}
+          {showRequestModal && selectedItem && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 className="text-xl font-bold mb-4">Request Material: {selectedItem.name}</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Team/Department</label>
+                    <input
+                      type="text"
+                      name="team"
+                      value={requestForm.team}
+                      onChange={handleRequestFormChange}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Production Team A"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Requested Quantity (Available: {selectedItem.stock})
+                    </label>
+                    <input
+                      type="number"
+                      name="requestedQty"
+                      value={requestForm.requestedQty}
+                      onChange={handleRequestFormChange}
+                      max={selectedItem.stock}
+                      min="1"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter quantity"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <select
+                      name="priority"
+                      value={requestForm.priority}
+                      onChange={handleRequestFormChange}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Urgent">Urgent</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                    <textarea
+                      name="notes"
+                      value={requestForm.notes}
+                      onChange={handleRequestFormChange}
+                      rows="3"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Additional notes or requirements..."
+                    />
                   </div>
                 </div>
-                <div className="bg-white shadow-lg rounded-2xl p-6">
-                  <h3 className="text-lg font-bold mb-4">Incoming Materials</h3>
-                  <div className="space-y-3">
-                    <div className="text-sm">
-                      <p className="font-medium">Collection Route A</p>
-                      <p className="text-gray-600">Expected: 500kg PET</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="font-medium">Collection Route B</p>
-                      <p className="text-gray-600">Expected: 300kg Paper</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white shadow-lg rounded-2xl p-6">
-                  <h3 className="text-lg font-bold mb-4">Low Stock Alerts</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <AlertTriangle className="text-orange-500" size={16} />
-                      <span className="text-sm">Glass bottles running low</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <AlertTriangle className="text-red-500" size={16} />
-                      <span className="text-sm">Metal cans critical</span>
-                    </div>
-                  </div>
+
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={createProductionRequest}
+                    disabled={!requestForm.team || !requestForm.requestedQty}
+                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Submit Request
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowRequestModal(false);
+                      setSelectedItem(null);
+                      setRequestForm({ team: '', requestedQty: '', notes: '', priority: 'Medium' });
+                    }}
+                    className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
