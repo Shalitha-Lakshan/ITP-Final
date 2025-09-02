@@ -9,6 +9,8 @@ const app = express();
 const userRoutes = require("./Routes/UserRoutes");
 const inventoryRoutes = require("./Routes/InventoryRoutes");
 const productionRequestRoutes = require("./Routes/ProductionRequestRoutes");
+const cartRoutes = require("./Routes/CartRoutes");
+const productRoutes = require("./Routes/ProductRoutes");
 
 // CORS Configuration
 const corsOptions = {
@@ -31,6 +33,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/users", userRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/production-requests", productionRequestRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/products", productRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

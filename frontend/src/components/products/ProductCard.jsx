@@ -1,8 +1,34 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false);
+
+  const handleAddToCart = async () => {
+    try {
+      const cartData = {
+        productId: product.id.toString(),
+        productName: product.name,
+        price: product.price,
+        quantity: 1,
+        imageUrl: product.imageUrl,
+        description: product.description,
+        userId: 'guest'
+      };
+
+      const response = await axios.post('http://localhost:5000/api/cart/add', cartData);
+      
+      if (response.status === 200 || response.status === 201) {
+        // Trigger custom event to update cart count
+        window.dispatchEvent(new Event('cartUpdated'));
+        alert(`${product.name} added to cart!`);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add item to cart. Please try again.');
+    }
+  };
 
   return (
     <div 
@@ -40,6 +66,7 @@ function ProductCard({ product }) {
           </Link>
           
           <button 
+            onClick={handleAddToCart}
             className="bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-md text-sm transition-colors"
           >
             Add to Cart

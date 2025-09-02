@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
+import axios from 'axios';
 import ProductCard from '../components/products/ProductCard';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -9,115 +12,65 @@ function ProductsPage() {
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Mock products data
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  // Update cart count from backend API
   useEffect(() => {
-    const mockProducts = [
-      {
-        id: 1,
-        name: "Recycled Tote Bag",
-        description: "Made from recycled plastic bottles, this durable tote is perfect for shopping.",
-        price: 24.99,
-        imageUrl: "https://images.unsplash.com/photo-1581783898377-1c85bf937427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cmVjeWNsZWQlMjBwcm9kdWN0fGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60",
-        category: "bags",
-        percentRecycled: 80,
-        pointsWorth: 250,
-        inStock: true
-      },
-      {
-        id: 2,
-        name: "Recycled Water Bottle",
-        description: "Insulated water bottle made from recycled plastic. Keeps drinks cold for 24 hours.",
-        price: 18.99,
-        imageUrl: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHJlY3ljbGVkJTIwcHJvZHVjdHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60",
-        category: "bottles",
-        percentRecycled: 95,
-        pointsWorth: 180,
-        inStock: true
-      },
-      {
-        id: 3,
-        name: "Recycled Notebook Set",
-        description: "Set of 3 notebooks made from recycled paper and plastic covers.",
-        price: 12.99,
-        imageUrl: "https://images.unsplash.com/photo-1584589167171-541ce45f1eea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cmVjeWNsZWQlMjBwcm9kdWN0fGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60",
-        category: "stationery",
-        percentRecycled: 100,
-        pointsWorth: 120,
-        inStock: true
-      },
-      {
-        id: 4,
-        name: "Recycled Plant Pot",
-        description: "Durable plant pots made from 100% recycled plastic.",
-        price: 9.99,
-        imageUrl: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fHBsYW50JTIwcG90fGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60",
-        category: "home",
-        percentRecycled: 100,
-        pointsWorth: 100,
-        inStock: true
-      },
-      {
-        id: 5,
-        name: "Recycled Coasters",
-        description: "Set of 4 coasters made from recycled plastic bottles.",
-        price: 8.99,
-        imageUrl: "https://images.unsplash.com/photo-1516962126636-27bf553c5ac4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Y29hc3RlcnN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
-        category: "home",
-        percentRecycled: 90,
-        pointsWorth: 90,
-        inStock: false
-      },
-      {
-        id: 6,
-        name: "Recycled Backpack",
-        description: "Durable backpack made from recycled plastic bottles.",
-        price: 49.99,
-        imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8YmFja3BhY2t8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
-        category: "bags",
-        percentRecycled: 85,
-        pointsWorth: 500,
-        inStock: true
-      },
-      {
-        id: 7,
-        name: "Recycled Sunglasses",
-        description: "Stylish sunglasses with frames made from recycled ocean plastic.",
-        price: 34.99,
-        imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8c3VuZ2xhc3Nlc3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60",
-        category: "accessories",
-        percentRecycled: 70,
-        pointsWorth: 350,
-        inStock: true
-      },
-      {
-        id: 8,
-        name: "Recycled Pencil Case",
-        description: "Pencil case made from recycled plastic with multiple compartments.",
-        price: 7.99,
-        imageUrl: "https://images.unsplash.com/photo-1522771500908-85dc259877cc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fHBlbmNpbCUyMGNhc2V8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
-        category: "stationery",
-        percentRecycled: 95,
-        pointsWorth: 80,
-        inStock: true
-      },
-      {
-        id: 9,
-        name: "Recycled Shopping Bag Set",
-        description: "Set of 3 foldable shopping bags made from recycled materials.",
-        price: 14.99,
-        imageUrl: "https://images.unsplash.com/photo-1600247354058-a75b467be8cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8c2hvcHBpbmclMjBiYWd8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
-        category: "bags",
-        percentRecycled: 90,
-        pointsWorth: 150,
-        inStock: true
+    const updateCartCount = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/cart?userId=guest');
+        const data = await response.json();
+        setCartItemCount(data.totalItems || 0);
+      } catch (error) {
+        console.error('Error fetching cart count:', error);
+        setCartItemCount(0);
       }
-    ];
+    };
+
+    updateCartCount();
     
-    setTimeout(() => {
-      setProducts(mockProducts);
+    // Listen for custom cart update events
+    const handleCartUpdate = () => updateCartCount();
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, []);
+  
+  // Fetch products from database
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:5000/api/products');
+      
+      if (response.data.products) {
+        // Transform backend products to match frontend format
+        const transformedProducts = response.data.products.map(product => ({
+          id: product._id,
+          name: product.name,
+          description: product.description || 'High-quality recycled product',
+          price: product.price,
+          imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+          category: product.category?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'general',
+          percentRecycled: 85, // Default recycled percentage
+          pointsWorth: product.points || 0,
+          inStock: product.stock > 0
+        }));
+        
+        setProducts(transformedProducts);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      // Fallback to empty array if backend is not available
+      setProducts([]);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
   }, []);
   
   // Filter and sort logic
@@ -153,6 +106,21 @@ function ProductsPage() {
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]"></div>
         
         <div className="relative max-w-6xl mx-auto px-6 lg:px-8 text-center">
+          {/* Cart Icon */}
+          <div className="absolute top-0 right-6 lg:right-8">
+            <Link 
+              to="/cart" 
+              className="relative inline-flex items-center justify-center w-14 h-14 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300 group"
+            >
+              <ShoppingCart size={24} className="text-white group-hover:scale-110 transition-transform" />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
+                  {cartItemCount}
+                </span>
+              )}
+            </Link>
+          </div>
+
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-500/20 border border-green-400/30 text-green-300 text-sm font-medium mb-8">
             <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
             🛍️ Shop Sustainable

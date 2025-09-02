@@ -293,7 +293,7 @@ function ShopPage() {
               </div>
               <div className="flex items-center space-x-2">
                 <Truck className="w-6 h-6" />
-                <span>Free Shipping Over $50</span>
+                <span>Free Shipping Over LKR 5,000</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Award className="w-6 h-6" />

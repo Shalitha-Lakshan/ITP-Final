@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import LogoutButton from "../common/LogoutButton";
 
 // Mock Data
 const auditLogs = [
@@ -491,6 +492,7 @@ export default function AdminDashboard() {
               <span className="font-medium">{tab.name}</span>
             </button>
           ))}
+          <LogoutButton />
         </nav>
       </aside>
 

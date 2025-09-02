@@ -11,17 +11,31 @@ function Login() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    role: ""
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  // Predefined role credentials
+  const roleCredentials = {
+    admin: { email: "admin@example.com", password: "admin123", dashboard: "/admin-dashboard" },
+    transport: { email: "transport@example.com", password: "transport123", dashboard: "/transport" },
+    inventory: { email: "inventory@example.com", password: "inventory123", dashboard: "/inventory" },
+    production: { email: "production@example.com", password: "production123", dashboard: "/production" },
+    sales: { email: "sales@example.com", password: "sales123", dashboard: "/sales" },
+    finance: { email: "finance@example.com", password: "finance123", dashboard: "/finance" }
+  };
+
   // Check if user is already logged in
   useEffect(() => {
     if (isAuthenticated()) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      // Don't redirect to home page, stay on current page or go to dashboard
+      const from = location.state?.from?.pathname;
+      if (from && from !== '/') {
+        navigate(from, { replace: true });
+      }
     }
   }, [isAuthenticated, navigate, location]);
 
@@ -65,11 +79,40 @@ function Login() {
     setMessage({ type: "", text: "" });
     setLoading(true);
 
-    // Validate all fields
+    // Check for role-based login
+    const matchedRole = Object.keys(roleCredentials).find(role => {
+      const creds = roleCredentials[role];
+      return creds.email === formData.email && creds.password === formData.password;
+    });
+
+    if (matchedRole) {
+      // Role-based login successful
+      const userData = {
+        id: matchedRole + "_user",
+        email: formData.email,
+        role: matchedRole,
+        name: matchedRole.charAt(0).toUpperCase() + matchedRole.slice(1) + " User"
+      };
+      
+      login(userData, "role_token_" + matchedRole);
+      
+      setMessage({ type: "success", text: `Login successful! Redirecting to ${matchedRole} dashboard...` });
+      
+      setTimeout(() => {
+        navigate(roleCredentials[matchedRole].dashboard, { replace: true });
+      }, 800);
+      
+      setLoading(false);
+      return;
+    }
+
+    // Validate all fields for regular login
     const newErrors = {};
     Object.keys(formData).forEach(key => {
-      const error = validateField(key, formData[key]);
-      if (error) newErrors[key] = error;
+      if (key !== 'role') {
+        const error = validateField(key, formData[key]);
+        if (error) newErrors[key] = error;
+      }
     });
 
     if (Object.keys(newErrors).length > 0) {
@@ -84,29 +127,21 @@ function Login() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ email: formData.email, password: formData.password })
       });
 
       const result = await response.json();
 
       if (result.success) {
-        // Use AuthContext login method
         login(result.user, result.token);
+        setMessage({ type: "success", text: "Login successful! Redirecting..." });
         
-        setMessage({ type: "success", text: "Login successful! Redirecting to home..." });
-        
-        // Redirect to shop page after successful login
         setTimeout(() => {
           const from = location.state?.from?.pathname;
-          if (from) {
-            navigate(from, { replace: true });
-          } else {
-            // All users go to home page after login
-            navigate('/');
-          }
-        }, 1500);
+          navigate(from || '/dashboard', { replace: true });
+        }, 800);
       } else {
-        setMessage({ type: "error", text: result.message || "Login failed. Please try again." });
+        setMessage({ type: "error", text: result.message || "Invalid credentials. Try role-based login or check your details." });
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -148,6 +183,7 @@ function Login() {
               <span className="font-medium">{message.text}</span>
             </div>
           )}
+
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}

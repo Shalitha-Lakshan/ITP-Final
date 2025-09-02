@@ -13,7 +13,7 @@ function Header() {
   const handleLogout = () => {
     logout();
     setIsProfileMenuOpen(false);
-    navigate('/login');
+    navigate('/');
   };
 
   const handleSearch = (e) => {

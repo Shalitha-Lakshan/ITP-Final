@@ -45,9 +45,31 @@ export default function InventoryMaterials() {
     fetchInventory();
   }, []);
 
-  // Input change
+  // Input change with validation
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
+    
+    // Validation logic
+    if (name === "name") {
+      // Item Name: only letters and spaces allowed
+      const nameRegex = /^[A-Za-z\s]*$/;
+      if (!nameRegex.test(value)) {
+        return; // Don't update if invalid
+      }
+    } else if (name === "weight") {
+      // Weight: max 3 digits, no special chars/letters, no negatives, allows decimals
+      const weightRegex = /^\d{0,3}(\.\d*)?$/;
+      if (value !== "" && (!weightRegex.test(value) || parseFloat(value) < 0)) {
+        return; // Don't update if invalid
+      }
+    } else if (name === "stock") {
+      // Stock: no special characters or letters, no negatives
+      const stockRegex = /^\d*$/;
+      if (value !== "" && (!stockRegex.test(value) || parseInt(value) < 0)) {
+        return; // Don't update if invalid
+      }
+    }
+    
     if (name === "lastUpdatedDate") {
       setNewItem({ ...newItem, lastUpdatedDate: value });
       if (value === todayDateString) {
@@ -254,7 +276,15 @@ export default function InventoryMaterials() {
             {/* --- inputs --- */}
             <div>
               <label className="block text-sm font-medium">Item Name</label>
-              <input type="text" name="name" value={newItem.name} onChange={handleInputChange} className="w-full border p-2 rounded" />
+              <input 
+                type="text" 
+                name="name" 
+                value={newItem.name} 
+                onChange={handleInputChange} 
+                className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="Enter item name (letters and spaces only)"
+              />
+              <p className="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
             </div>
 
             <div>
@@ -283,12 +313,28 @@ export default function InventoryMaterials() {
 
             <div>
               <label className="block text-sm font-medium">Weight (Kg)</label>
-              <input type="number" step="0.1" name="weight" value={newItem.weight} onChange={handleInputChange} className="w-full border p-2 rounded" />
+              <input 
+                type="text" 
+                name="weight" 
+                value={newItem.weight} 
+                onChange={handleInputChange} 
+                className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="Enter weight (max 3 digits, decimals allowed)"
+              />
+              <p className="text-xs text-gray-500 mt-1">Maximum 3 digits, no negative numbers</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium">Stock</label>
-              <input type="number" name="stock" value={newItem.stock} onChange={handleInputChange} className="w-full border p-2 rounded" />
+              <input 
+                type="text" 
+                name="stock" 
+                value={newItem.stock} 
+                onChange={handleInputChange} 
+                className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="Enter stock quantity (numbers only)"
+              />
+              <p className="text-xs text-gray-500 mt-1">Numbers only, no negative values</p>
             </div>
 
             <div>

@@ -6,6 +6,7 @@ import {
 import { User, Award, ShoppingBag, Clock, Star, Gift, CreditCard, MapPin, Phone, Mail, Edit, Eye, Download } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import LogoutButton from "../common/LogoutButton";
 
 const pointsHistory = [
   { month: "Jan", earned: 120, redeemed: 50, balance: 70 },
@@ -31,16 +32,16 @@ const pointsBreakdown = [
 ];
 
 const rewardTiers = [
-  { name: "Bronze", minPoints: 0, maxPoints: 199, benefits: ["5% Discount", "Free Shipping on $50+"] },
+  { name: "Bronze", minPoints: 0, maxPoints: 199, benefits: ["5% Discount", "Free Shipping on LKR 5,000+"] },
   { name: "Silver", minPoints: 200, maxPoints: 499, benefits: ["10% Discount", "Free Shipping", "Priority Support"] },
   { name: "Gold", minPoints: 500, maxPoints: 999, benefits: ["15% Discount", "Free Shipping", "Early Access", "Birthday Bonus"] },
   { name: "Platinum", minPoints: 1000, maxPoints: null, benefits: ["20% Discount", "Free Shipping", "VIP Support", "Exclusive Products"] },
 ];
 
 const availableRewards = [
-  { id: 1, name: "$10 Off Coupon", points: 100, description: "Get $10 off your next purchase", type: "discount" },
+  { id: 1, name: "LKR 1,000 Off Coupon", points: 100, description: "Get LKR 1,000 off your next purchase", type: "discount" },
   { id: 2, name: "Free Shipping", points: 50, description: "Free shipping on any order", type: "shipping" },
-  { id: 3, name: "$25 Gift Card", points: 250, description: "Digital gift card for future purchases", type: "gift_card" },
+  { id: 3, name: "LKR 2,500 Gift Card", points: 250, description: "Digital gift card for future purchases", type: "gift_card" },
   { id: 4, name: "Premium Product", points: 500, description: "Exclusive premium product access", type: "product" },
 ];
 
@@ -156,8 +157,8 @@ export default function UserDashboard() {
               <CreditCard className="text-green-600" size={32} />
               <div>
                 <p className="text-gray-500">Total Spent</p>
-                <h2 className="text-xl font-bold">${userProfile.totalSpent}</h2>
-                <p className="text-sm text-green-600">$420 this month</p>
+                <h2 className="text-xl font-bold">LKR {userProfile.totalSpent}</h2>
+                <p className="text-sm text-green-600">LKR 42,000 this month</p>
               </div>
             </CardContent>
           </Card>
@@ -486,6 +487,7 @@ export default function UserDashboard() {
               <span className="font-medium">{item.name}</span>
             </button>
           ))}
+          <LogoutButton />
         </nav>
       </aside>
 

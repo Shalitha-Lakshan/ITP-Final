@@ -10,58 +10,24 @@ import {
   Users, Building, Briefcase, Target, AlertCircle, CheckCircle,
   Clock, XCircle, Plus, Search
 } from "lucide-react";
+import EmployeePayroll from "./EmployeePayroll";
+import OverviewCards from "./OverviewCards";
+import FinanceCharts from "./FinanceCharts";
+import CustomerPaymentsManagement from "./CustomerPaymentsManagement";
+import EmployeePaymentsManagement from "./EmployeePaymentsManagement";
+import PaymentCRUD from "./PaymentCRUD";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import LogoutButton from "../common/LogoutButton";
 
-// Finance Data
-const revenueExpensesData = [
-  { month: "Jan", revenue: 125000, expenses: 85000, profit: 40000 },
-  { month: "Feb", revenue: 145000, expenses: 95000, profit: 50000 },
-  { month: "Mar", revenue: 168000, expenses: 112000, profit: 56000 },
-  { month: "Apr", revenue: 192000, expenses: 128000, profit: 64000 },
-  { month: "May", revenue: 215000, expenses: 145000, profit: 70000 },
-  { month: "Jun", revenue: 238000, expenses: 158000, profit: 80000 },
-];
+// Mock data removed - to be replaced with API calls
+const revenueExpensesData = [];
+const expenseBreakdown = [];
+const paymentMethodData = [];
+const monthlyPaymentData = [];
 
-const expenseBreakdown = [
-  { name: "Salaries & Benefits", value: 45000, color: "#3B82F6" },
-  { name: "Operations", value: 32000, color: "#10B981" },
-  { name: "Marketing", value: 18000, color: "#F59E0B" },
-  { name: "Technology", value: 15000, color: "#EF4444" },
-  { name: "Utilities", value: 12000, color: "#8B5CF6" },
-  { name: "Other", value: 8000, color: "#6B7280" },
-];
-
-// Payment Data
-const paymentMethodData = [
-  { method: "Credit Card", amount: 45000, percentage: 60 },
-  { method: "Bank Transfer", amount: 22500, percentage: 30 },
-  { method: "PayPal", amount: 5250, percentage: 7 },
-  { method: "Cash", amount: 2250, percentage: 3 },
-];
-
-const monthlyPaymentData = [
-  { month: "Jan", received: 18000, pending: 2000, failed: 500 },
-  { month: "Feb", received: 22000, pending: 1500, failed: 300 },
-  { month: "Mar", received: 25000, pending: 1800, failed: 400 },
-  { month: "Apr", received: 28000, pending: 2200, failed: 600 },
-  { month: "May", received: 32000, pending: 1900, failed: 350 },
-];
-
-const recentTransactions = [
-  { id: "TXN001", customer: "John Smith", amount: 1250, method: "Credit Card", status: "Completed", date: "2025-08-30", time: "14:30", type: "Payment" },
-  { id: "TXN002", customer: "Sarah Johnson", amount: 890, method: "Bank Transfer", status: "Pending", date: "2025-08-30", time: "13:45", type: "Payment" },
-  { id: "TXN003", customer: "Engineering Team", amount: 8500, method: "Bank Transfer", status: "Completed", date: "2025-08-29", time: "16:10", type: "Expense" },
-  { id: "TXN004", customer: "Emma Davis", amount: 675, method: "Credit Card", status: "Completed", date: "2025-08-29", time: "16:10", type: "Payment" },
-  { id: "TXN005", customer: "Marketing Campaign", amount: 3200, method: "Bank Transfer", status: "Processing", date: "2025-08-29", time: "15:25", type: "Expense" },
-];
-
-const pendingPayments = [
-  { id: "PAY001", invoice: "INV-2025-001", customer: "ABC Corporation", amount: 5000, dueDate: "2025-09-05", overdue: false },
-  { id: "PAY002", invoice: "INV-2025-002", customer: "XYZ Industries", amount: 3200, dueDate: "2025-08-28", overdue: true },
-  { id: "PAY003", invoice: "INV-2025-003", customer: "Tech Solutions", amount: 1800, dueDate: "2025-09-10", overdue: false },
-  { id: "PAY004", invoice: "INV-2025-004", customer: "Global Enterprises", amount: 4500, dueDate: "2025-08-25", overdue: true },
-];
+const recentTransactions = [];
+const pendingPayments = [];
 
 export default function UnifiedFinanceDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -69,125 +35,16 @@ export default function UnifiedFinanceDashboard() {
   const tabs = [
     { id: "overview", name: "Financial Overview", icon: <DollarSign size={20} /> },
     { id: "analytics", name: "Financial Analytics", icon: <TrendingUp size={20} /> },
-    { id: "payments", name: "Payment Management", icon: <CreditCard size={20} /> },
-    { id: "transactions", name: "Transaction History", icon: <FileText size={20} /> },
-    { id: "pending", name: "Pending Payments", icon: <Clock size={20} /> },
+    { id: "customer-payments", name: "Customer Payments", icon: <CreditCard size={20} /> },
+    { id: "employee-payments", name: "Employee Payments", icon: <Users size={20} /> },
+    { id: "payment-crud", name: "Payment Records", icon: <FileText size={20} /> },
+    { id: "payroll", name: "Employee Payroll", icon: <Briefcase size={20} /> },
   ];
 
   const renderOverview = () => (
     <div className="space-y-8">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-700">Total Revenue</p>
-                <p className="text-3xl font-bold text-blue-900">$238K</p>
-                <p className="text-sm text-blue-600 flex items-center mt-1">
-                  <ArrowUpRight size={16} className="mr-1" />
-                  +12.5% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                <DollarSign className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-700">Net Profit</p>
-                <p className="text-3xl font-bold text-green-900">$80K</p>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  <ArrowUpRight size={16} className="mr-1" />
-                  +8.2% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
-                <TrendingUp className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-700">Payments Received</p>
-                <p className="text-3xl font-bold text-purple-900">$32K</p>
-                <p className="text-sm text-purple-600 flex items-center mt-1">
-                  <ArrowUpRight size={16} className="mr-1" />
-                  +15.3% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
-                <CreditCard className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-700">Pending Payments</p>
-                <p className="text-3xl font-bold text-orange-900">$14.5K</p>
-                <p className="text-sm text-orange-600 flex items-center mt-1">
-                  <ArrowDownRight size={16} className="mr-1" />
-                  -5.1% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center">
-                <Clock className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Revenue vs Expenses</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={revenueExpensesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="revenue" fill="#3B82F6" name="Revenue" />
-                <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Monthly Payments</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={monthlyPaymentData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area type="monotone" dataKey="received" stackId="1" stroke="#10B981" fill="#10B981" name="Received" />
-                <Area type="monotone" dataKey="pending" stackId="1" stroke="#F59E0B" fill="#F59E0B" name="Pending" />
-                <Area type="monotone" dataKey="failed" stackId="1" stroke="#EF4444" fill="#EF4444" name="Failed" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      <OverviewCards />
+      <FinanceCharts />
     </div>
   );
 
@@ -410,12 +267,14 @@ export default function UnifiedFinanceDashboard() {
         return renderOverview();
       case "analytics":
         return renderAnalytics();
-      case "payments":
-        return renderPayments();
-      case "transactions":
-        return renderTransactions();
-      case "pending":
-        return renderPendingPayments();
+      case "customer-payments":
+        return <CustomerPaymentsManagement />;
+      case "employee-payments":
+        return <EmployeePaymentsManagement />;
+      case "payment-crud":
+        return <PaymentCRUD />;
+      case "payroll":
+        return <EmployeePayroll />;
       default:
         return renderOverview();
     }
@@ -452,6 +311,7 @@ export default function UnifiedFinanceDashboard() {
               <span className="font-medium">{tab.name}</span>
             </button>
           ))}
+          <LogoutButton />
         </nav>
       </aside>
 

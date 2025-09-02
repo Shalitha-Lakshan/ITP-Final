@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import LogoutButton from "../common/LogoutButton";
 import {
   LayoutDashboard,
   Factory,
@@ -62,30 +63,7 @@ const ProductionDashboard = () => {
   ];
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [products, setProducts] = useState([
-    {
-      name: "Recycled PET Filament",
-      price: 29.99,
-      stock: 150,
-      category: "Filament",
-      imageUrl:
-        "https://images.unsplash.com/photo-1616627989828-b522c7f9c799?w=400",
-      description:
-        "High-quality filament made from 100% recycled PET plastic bottles, ideal for 3D printing.",
-      points: 300,
-    },
-    {
-      name: "Eco-Friendly Tote Bag",
-      price: 24.99,
-      stock: 60,
-      category: "Accessories",
-      imageUrl:
-        "https://images.unsplash.com/photo-1606813909021-1a482d2730f2?w=400",
-      description:
-        "Durable tote bag made from recycled plastic bottles, perfect for shopping.",
-      points: 250,
-    },
-  ]);
+  const [products, setProducts] = useState([]);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -271,17 +249,58 @@ const ProductionDashboard = () => {
     }
   };
 
-  // Load inventory data when materials tab is active
+  // Fetch products from database
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/products');
+      if (response.data.products) {
+        setProducts(response.data.products);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      // Don't show alert for fetch errors, just log them
+    }
+  };
+
+  // Load data when component mounts and when tabs change
   useEffect(() => {
-    if (activeTab === 'materials') {
+    if (activeTab === 'overview') {
+      fetchProducts();
+    } else if (activeTab === 'materials') {
       fetchInventoryData();
       fetchAcceptedMaterials();
     }
   }, [activeTab]);
 
-  // Handle form input
+  // Load products on component mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // Handle form input with validation
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Validation logic
+    if (name === 'name') {
+      // Product Name: only letters and spaces, no numbers or special characters
+      const nameRegex = /^[A-Za-z\s]*$/;
+      if (!nameRegex.test(value)) {
+        return; // Don't update if invalid
+      }
+    } else if (name === 'price') {
+      // Price: max 4 digits, no special characters or letters
+      const priceRegex = /^\d{0,4}(\.\d{0,2})?$/;
+      if (value !== '' && !priceRegex.test(value)) {
+        return; // Don't update if invalid
+      }
+    } else if (name === 'stock' || name === 'points') {
+      // Stock Level and Reward Points: no negative numbers
+      if (value < 0) {
+        return; // Don't update if negative
+      }
+    }
+    
     setNewProduct({ ...newProduct, [name]: value });
   };
 
@@ -297,14 +316,16 @@ const ProductionDashboard = () => {
     }
   };
 
-  // Add product
-  const handleAddProduct = (e) => {
+  // Add product to database
+  const handleAddProduct = async (e) => {
     e.preventDefault();
-    if (!newProduct.name || !newProduct.price) return;
+    if (!newProduct.name || !newProduct.price || !newProduct.category) {
+      alert('Please fill in all required fields: Product Name, Price, and Category');
+      return;
+    }
 
-    setProducts([
-      ...products,
-      {
+    try {
+      const productData = {
         name: newProduct.name,
         price: parseFloat(newProduct.price),
         stock: parseInt(newProduct.stock) || 0,
@@ -312,20 +333,43 @@ const ProductionDashboard = () => {
         description: newProduct.description,
         category: newProduct.category,
         points: parseInt(newProduct.points) || 0,
-      },
-    ]);
+      };
 
-    // Reset form
-    setNewProduct({
-      name: "",
-      price: "",
-      stock: "",
-      imageUrl: "",
-      description: "",
-      category: "",
-      points: "",
-    });
-    setShowAddForm(false);
+      const response = await axios.post('http://localhost:5000/api/products', productData);
+      
+      if (response.status === 201) {
+        // Add to local state for immediate display
+        setProducts([...products, response.data.product]);
+        
+        // Reset form
+        setNewProduct({
+          name: "",
+          price: "",
+          stock: "",
+          imageUrl: "",
+          description: "",
+          category: "",
+          points: "",
+        });
+        setShowAddForm(false);
+        
+        alert('Product created successfully!');
+      }
+    } catch (error) {
+      console.error('Error creating product:', error);
+      
+      let errorMessage = 'Failed to create product. ';
+      
+      if (error.response?.data?.message) {
+        errorMessage += error.response.data.message;
+      } else if (error.code === 'ECONNREFUSED') {
+        errorMessage += 'Cannot connect to backend server. Please ensure the backend server is running.';
+      } else {
+        errorMessage += 'Please try again.';
+      }
+      
+      alert(errorMessage);
+    }
   };
 
   return (
@@ -359,6 +403,7 @@ const ProductionDashboard = () => {
               <span className="font-medium">{item.name}</span>
             </button>
           ))}
+          <LogoutButton />
         </nav>
 
         <div className="p-4 border-t border-gray-200">
@@ -461,24 +506,30 @@ const ProductionDashboard = () => {
                       value={newProduct.name}
                       onChange={handleChange}
                       pattern="^[A-Za-z\s]+$"
-                      title="Only letters and spaces are allowed"
+                      title="Only letters and spaces are allowed - no numbers or special characters"
                       required
-                      className="w-full border rounded-lg p-2"
-                      placeholder="Enter product name"
+                      className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter product name (letters and spaces only)"
                     />
+                    {newProduct.name && !/^[A-Za-z\s]*$/.test(newProduct.name) && (
+                      <p className="text-red-500 text-xs mt-1">Product name can only contain letters and spaces</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium">Price (LKR)</label>
                     <input
-                      type="number"
+                      type="text"
                       name="price"
                       value={newProduct.price}
                       onChange={handleChange}
-                      min="0"
-                      step="0.01"
-                      className="w-full border rounded-lg p-2"
-                      placeholder="Enter price in LKR"
+                      pattern="^\d{1,4}(\.\d{1,2})?$"
+                      title="Maximum 4 digits, numbers only (e.g., 1234 or 1234.56)"
+                      className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter price (max 4 digits, e.g., 1234.56)"
                     />
+                    {newProduct.price && !/^\d{0,4}(\.\d{0,2})?$/.test(newProduct.price) && (
+                      <p className="text-red-500 text-xs mt-1">Price must be maximum 4 digits with optional decimal (e.g., 1234.56)</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium">
@@ -490,9 +541,12 @@ const ProductionDashboard = () => {
                       value={newProduct.stock}
                       onChange={handleChange}
                       min="0"
-                      className="w-full border rounded-lg p-2"
-                      placeholder="Enter stock level"
+                      className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter stock level (positive numbers only)"
                     />
+                    {newProduct.stock < 0 && (
+                      <p className="text-red-500 text-xs mt-1">Stock level cannot be negative</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium">Category</label>
@@ -500,7 +554,7 @@ const ProductionDashboard = () => {
                       name="category"
                       value={newProduct.category}
                       onChange={handleChange}
-                      className="w-full border rounded-lg p-2"
+                      className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select Category</option>
                       <option value="Household Items">Household Items</option>
@@ -536,9 +590,12 @@ const ProductionDashboard = () => {
                       value={newProduct.points}
                       onChange={handleChange}
                       min="0"
-                      className="w-full border rounded-lg p-2"
-                      placeholder="Enter redeemable points"
+                      className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter reward points (positive numbers only)"
                     />
+                    {newProduct.points < 0 && (
+                      <p className="text-red-500 text-xs mt-1">Reward points cannot be negative</p>
+                    )}
                   </div>
                 </div>
                 <div>

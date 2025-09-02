@@ -4,8 +4,8 @@ import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HomePage from "./pages/HomePage";
-import ShopPage from "./pages/ShopPage";
 import ProductsPage from "./pages/ProductsPage";
+import CartPage from "./pages/CartPage";
 import AboutUs from "./pages/AboutUs";
 import Register from "./components/register/register";
 import Login from "./pages/Login";
@@ -37,8 +37,8 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/shop" element={<ShopPage />} />
           <Route path="/products" element={<ProductsPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
@@ -78,7 +78,7 @@ function App() {
           <Route 
             path="/inventory" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="inventory">
                 <InventoryDashboard />
               </ProtectedRoute>
             } 
@@ -126,7 +126,7 @@ function App() {
           <Route 
             path="/production" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="production">
                 <ProductionDashboard />
               </ProtectedRoute>
             } 
@@ -134,7 +134,7 @@ function App() {
           <Route 
             path="/finance" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="finance">
                 <UnifiedFinanceDashboard />
               </ProtectedRoute>
             } 
@@ -142,7 +142,7 @@ function App() {
           <Route 
             path="/sales" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="sales">
                 <SalesDashboard />
               </ProtectedRoute>
             } 
@@ -150,7 +150,7 @@ function App() {
           <Route 
             path="/transport" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="transport">
                 <TransportDashboard />
               </ProtectedRoute>
             } 
