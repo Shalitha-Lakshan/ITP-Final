@@ -7,34 +7,11 @@ import { ShoppingCart, TrendingUp, Users, DollarSign, Package, Eye, Edit, Trash2
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 
-const salesData = [
-  { month: "Jan", sales: 15000, orders: 120, customers: 85 },
-  { month: "Feb", sales: 18000, orders: 145, customers: 102 },
-  { month: "Mar", sales: 22000, orders: 180, customers: 125 },
-  { month: "Apr", sales: 25000, orders: 200, customers: 140 },
-  { month: "May", sales: 28000, orders: 220, customers: 155 },
-];
-
-const productSalesData = [
-  { name: "Product A", value: 35, sales: 12000 },
-  { name: "Product B", value: 25, sales: 8500 },
-  { name: "Product C", value: 20, sales: 7000 },
-  { name: "Product D", value: 20, sales: 6500 },
-];
-
-const recentOrders = [
-  { id: "ORD001", customer: "John Smith", product: "Product A", quantity: 5, amount: 500, status: "Completed", date: "2025-08-30" },
-  { id: "ORD002", customer: "Sarah Johnson", product: "Product B", quantity: 3, amount: 300, status: "Pending", date: "2025-08-30" },
-  { id: "ORD003", customer: "Mike Wilson", product: "Product C", quantity: 8, amount: 800, status: "Shipped", date: "2025-08-29" },
-  { id: "ORD004", customer: "Emma Davis", product: "Product A", quantity: 2, amount: 200, status: "Processing", date: "2025-08-29" },
-];
-
-const topCustomers = [
-  { id: 1, name: "ABC Corporation", totalOrders: 25, totalSpent: 15000, lastOrder: "2025-08-28" },
-  { id: 2, name: "XYZ Industries", totalOrders: 18, totalSpent: 12000, lastOrder: "2025-08-27" },
-  { id: 3, name: "Tech Solutions Ltd", totalOrders: 15, totalSpent: 9500, lastOrder: "2025-08-26" },
-  { id: 4, name: "Global Enterprises", totalOrders: 12, totalSpent: 8000, lastOrder: "2025-08-25" },
-];
+// Mock data removed - to be replaced with API calls
+const salesData = [];
+const productSalesData = [];
+const recentOrders = [];
+const topCustomers = [];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -97,7 +74,7 @@ export default function SalesDashboard() {
             <TrendingUp className="text-orange-600" size={32} />
             <div>
               <p className="text-gray-500">Avg Order Value</p>
-              <h2 className="text-xl font-bold">$125</h2>
+              <h2 className="text-xl font-bold">LKR 0</h2>
               <p className="text-sm text-orange-600">+5% from last month</p>
             </div>
           </CardContent>
@@ -172,7 +149,7 @@ export default function SalesDashboard() {
                 <td className="p-3">{order.customer}</td>
                 <td className="p-3">{order.product}</td>
                 <td className="p-3">{order.quantity}</td>
-                <td className="p-3">${order.amount}</td>
+                <td className="p-3">LKR {order.amount}</td>
                 <td className="p-3">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                     {order.status}
@@ -216,7 +193,7 @@ export default function SalesDashboard() {
               <tr key={customer.id} className="border-b hover:bg-gray-50">
                 <td className="p-3 font-medium">{customer.name}</td>
                 <td className="p-3">{customer.totalOrders}</td>
-                <td className="p-3">${customer.totalSpent.toLocaleString()}</td>
+                <td className="p-3">LKR {customer.totalSpent.toLocaleString()}</td>
                 <td className="p-3">{customer.lastOrder}</td>
                 <td className="p-3">
                   <div className="flex space-x-2">

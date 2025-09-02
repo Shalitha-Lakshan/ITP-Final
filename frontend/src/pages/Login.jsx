@@ -20,7 +20,7 @@ function Login() {
   // Check if user is already logged in
   useEffect(() => {
     if (isAuthenticated()) {
-      const from = location.state?.from?.pathname || '/dashboard';
+      const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
