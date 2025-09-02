@@ -78,7 +78,7 @@ function App() {
           <Route 
             path="/inventory" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="inventory">
                 <InventoryDashboard />
               </ProtectedRoute>
             } 
@@ -126,7 +126,7 @@ function App() {
           <Route 
             path="/production" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="production">
                 <ProductionDashboard />
               </ProtectedRoute>
             } 
@@ -134,7 +134,7 @@ function App() {
           <Route 
             path="/finance" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="finance">
                 <UnifiedFinanceDashboard />
               </ProtectedRoute>
             } 
@@ -142,7 +142,7 @@ function App() {
           <Route 
             path="/sales" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="sales">
                 <SalesDashboard />
               </ProtectedRoute>
             } 
@@ -150,7 +150,7 @@ function App() {
           <Route 
             path="/transport" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="transport">
                 <TransportDashboard />
               </ProtectedRoute>
             } 

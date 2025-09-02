@@ -6,6 +6,7 @@ import {
 import { User, Award, ShoppingBag, Clock, Star, Gift, CreditCard, MapPin, Phone, Mail, Edit, Eye, Download } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import LogoutButton from "../common/LogoutButton";
 
 const pointsHistory = [
   { month: "Jan", earned: 120, redeemed: 50, balance: 70 },
@@ -486,6 +487,7 @@ export default function UserDashboard() {
               <span className="font-medium">{item.name}</span>
             </button>
           ))}
+          <LogoutButton />
         </nav>
       </aside>
 

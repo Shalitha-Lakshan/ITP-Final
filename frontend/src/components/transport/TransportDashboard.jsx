@@ -6,6 +6,7 @@ import {
 import { Truck, MapPin, Clock, Package, CheckCircle, AlertCircle, Plus, Search, Filter, Navigation, Users } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import LogoutButton from "../common/LogoutButton";
 
 const collectionData = [
   { month: "Jan", collected: 1200, scheduled: 1400, efficiency: 85.7 },
@@ -455,6 +456,7 @@ export default function TransportDashboard() {
               <span className="font-medium">{item.name}</span>
             </button>
           ))}
+          <LogoutButton />
         </nav>
       </aside>
 

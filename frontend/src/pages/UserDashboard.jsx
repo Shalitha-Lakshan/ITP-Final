@@ -66,7 +66,7 @@ function UserDashboard() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   if (loading) {

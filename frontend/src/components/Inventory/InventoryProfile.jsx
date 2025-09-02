@@ -44,7 +44,7 @@ export default function InventoryProfile() {
 
   const handleLogout = () => {
     localStorage.removeItem("token"); // clear auth token
-    navigate("/login"); // redirect to login page
+    navigate("/"); // redirect to homepage
   };
 
   // ✅ Handle profile picture upload

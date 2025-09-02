@@ -6,6 +6,7 @@ import {
 import { ShoppingCart, TrendingUp, Users, DollarSign, Package, Eye, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import LogoutButton from "../common/LogoutButton";
 
 // Mock data removed - to be replaced with API calls
 const salesData = [];
@@ -288,6 +289,7 @@ export default function SalesDashboard() {
               <span className="font-medium">{item.name}</span>
             </button>
           ))}
+          <LogoutButton />
         </nav>
       </aside>
 

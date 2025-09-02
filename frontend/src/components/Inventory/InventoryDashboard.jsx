@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import LogoutButton from "../common/LogoutButton";
 import {
   BarChart,
   Bar,
@@ -26,9 +27,17 @@ import {
 export default function InventoryDashboard() {
   const [inventory, setInventory] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const [profilePic, setProfilePic] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const menuItems = [
+    { name: "Inventory Overview", key: "overview", icon: <CubeIcon className="w-5 h-5" /> },
+    { name: "Stock Management", key: "stock", icon: <ChartBarIcon className="w-5 h-5" /> },
+    { name: "Production Requests", key: "requests", icon: <DocumentChartBarIcon className="w-5 h-5" /> },
+    { name: "Analytics", key: "analytics", icon: <ArrowTrendingUpIcon className="w-5 h-5" /> },
+  ];
 
   useEffect(() => {
     fetchInventory();
@@ -115,20 +124,22 @@ export default function InventoryDashboard() {
         </div>
         
         <nav className="p-4 space-y-2">
-          <Link
-            to="/inventory"
-            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
-          >
-            <ChartBarIcon className="w-5 h-5" />
-            <span className="font-medium">Dashboard</span>
-          </Link>
-          <Link
-            to="/inventory/forms"
-            className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
-          >
-            <CubeIcon className="w-5 h-5" />
-            <span className="font-medium">Inventory Forms</span>
-          </Link>
+          {menuItems.map((item) => (
+            <Link
+              key={item.key}
+              to={`/inventory/${item.key}`}
+              onClick={() => setActiveTab(item.key)}
+              className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${
+                activeTab === item.key
+                  ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {item.icon}
+              <span className="font-medium">{item.name}</span>
+            </Link>
+          ))}
+          <LogoutButton />
           <Link
             to="/inventory/materials"
             className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"

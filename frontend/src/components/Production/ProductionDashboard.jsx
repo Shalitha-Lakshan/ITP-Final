@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import LogoutButton from "../common/LogoutButton";
 import {
   LayoutDashboard,
   Factory,
@@ -359,6 +360,7 @@ const ProductionDashboard = () => {
               <span className="font-medium">{item.name}</span>
             </button>
           ))}
+          <LogoutButton />
         </nav>
 
         <div className="p-4 border-t border-gray-200">
