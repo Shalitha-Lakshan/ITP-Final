@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Placeholder for auth state
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated } = useAuth();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -21,7 +24,14 @@ function Navbar() {
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
   }, [location]);
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileMenuOpen(false);
+    navigate('/');
+  };
 
   const navLinks = [
     { to: '/', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -88,28 +98,81 @@ function Navbar() {
             
             {/* Auth Buttons */}
             <div className="ml-8 flex items-center space-x-3">
-              {isLoggedIn ? (
-                <>
-                  <Link 
-                    to="/user-dashboard" 
+              {isAuthenticated() ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                       isScrolled 
                         ? 'text-gray-700 hover:text-green-600 hover:bg-green-50'
                         : 'text-white/90 hover:text-white hover:bg-white/20'
                     }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span>Dashboard</span>
-                  </Link>
-                  <button 
-                    className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all duration-300 text-sm font-medium shadow-lg hover:shadow-red-500/25"
-                    onClick={() => setIsLoggedIn(false)}
-                  >
-                    Logout
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      isScrolled ? 'bg-green-600' : 'bg-white/20'
+                    }`}>
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <span className="hidden md:block">{user?.name || 'User'}</span>
                   </button>
-                </>
+
+                  {/* Profile Dropdown */}
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                        <p className="text-sm text-gray-500">{user?.email}</p>
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {user?.role || 'User'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            navigate('/dashboard');
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          My Dashboard
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            navigate('/shop');
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                          </svg>
+                          Shop
+                        </button>
+                      </div>
+                      
+                      <div className="border-t border-gray-100 pt-2">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                        >
+                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
                   <Link 
@@ -184,10 +247,14 @@ function Navbar() {
             
             {/* Mobile Auth Section */}
             <div className="pt-4 border-t border-gray-200">
-              {isLoggedIn ? (
+              {isAuthenticated() ? (
                 <>
+                  <div className="px-4 py-3 mb-3 bg-gray-50 rounded-xl">
+                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                    <p className="text-sm text-gray-500">{user?.email}</p>
+                  </div>
                   <Link 
-                    to="/user-dashboard" 
+                    to="/dashboard" 
                     className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 transition-all duration-300"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,9 +262,18 @@ function Navbar() {
                     </svg>
                     <span>Dashboard</span>
                   </Link>
+                  <Link 
+                    to="/shop" 
+                    className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 transition-all duration-300"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span>Shop</span>
+                  </Link>
                   <button 
                     className="w-full mt-3 px-4 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all duration-300 text-base font-medium"
-                    onClick={() => setIsLoggedIn(false)}
+                    onClick={handleLogout}
                   >
                     Logout
                   </button>

@@ -93,7 +93,7 @@ function Login() {
         // Use AuthContext login method
         login(result.user, result.token);
         
-        setMessage({ type: "success", text: "Login successful! Redirecting to shop..." });
+        setMessage({ type: "success", text: "Login successful! Redirecting to home..." });
         
         // Redirect to shop page after successful login
         setTimeout(() => {
@@ -101,8 +101,8 @@ function Login() {
           if (from) {
             navigate(from, { replace: true });
           } else {
-            // All users go to shop page after login
-            navigate('/shop');
+            // All users go to home page after login
+            navigate('/');
           }
         }, 1500);
       } else {
