@@ -24,7 +24,7 @@ const PaymentCRUD = () => {
 
   const fetchPayments = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/finance/payments');
+      const response = await fetch('http://localhost:5000/api/payments/payments');
       if (response.ok) {
         const data = await response.json();
         setPayments(data);
@@ -40,8 +40,8 @@ const PaymentCRUD = () => {
     e.preventDefault();
     try {
       const url = modalType === 'edit' 
-        ? `http://localhost:5000/api/finance/payments/${selectedPayment._id}`
-        : 'http://localhost:5000/api/finance/payments';
+        ? `http://localhost:5000/api/payments/payments/${selectedPayment._id}`
+        : 'http://localhost:5000/api/payments/payments';
       
       const method = modalType === 'edit' ? 'PUT' : 'POST';
       
@@ -66,7 +66,7 @@ const PaymentCRUD = () => {
   const handleDelete = async (paymentId) => {
     if (window.confirm('Are you sure you want to delete this payment record? This action cannot be undone.')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/finance/payments/${paymentId}`, {
+        const response = await fetch(`http://localhost:5000/api/payments/payments/${paymentId}`, {
           method: 'DELETE'
         });
         if (response.ok) {

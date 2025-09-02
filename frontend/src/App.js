@@ -4,7 +4,6 @@ import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HomePage from "./pages/HomePage";
-import ShopPage from "./pages/ShopPage";
 import ProductsPage from "./pages/ProductsPage";
 import AboutUs from "./pages/AboutUs";
 import Register from "./components/register/register";
@@ -37,7 +36,6 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/shop" element={<ShopPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/register" element={<Register />} />

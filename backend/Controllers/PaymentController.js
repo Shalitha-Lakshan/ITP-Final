@@ -497,24 +497,71 @@ const getAllPayments = async (req, res) => {
 
 const createPayment = async (req, res) => {
   try {
+    const { orderId, customerName, amount, paymentMethod, status, notes, paymentDate } = req.body;
+    
+    // Generate a unique transaction ID
+    const transactionId = `PAY${Date.now()}`;
+    
+    // Create payment data compatible with PaymentTransaction schema
     const paymentData = {
-      ...req.body,
-      transactionId: `PAY${Date.now()}`,
+      transactionId,
+      orderId: orderId || `ORD${Date.now()}`, // Generate order ID if not provided
+      customerId: `CUST${Date.now()}`, // Generate customer ID (you might want to link to actual customer)
+      customerName,
+      amount: parseFloat(amount),
+      currency: 'LKR',
+      paymentMethod: paymentMethod === 'cash' ? 'Cash' : 
+                    paymentMethod === 'card' ? 'Credit Card' :
+                    paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
+                    paymentMethod === 'mobile_payment' ? 'PayPal' : 'Cash',
+      paymentGateway: paymentMethod === 'cash' ? 'Cash' : 'Other',
+      status: status === 'pending' ? 'Pending' :
+              status === 'completed' ? 'Completed' :
+              status === 'failed' ? 'Failed' : 'Pending',
+      fees: {
+        processingFee: 0,
+        gatewayFee: 0,
+        totalFees: 0
+      },
+      netAmount: parseFloat(amount),
+      notes,
+      paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
       createdAt: new Date()
     };
+    
     const newPayment = new PaymentTransaction(paymentData);
     const savedPayment = await newPayment.save();
     res.status(201).json(savedPayment);
   } catch (error) {
+    console.error('Error creating payment:', error);
     res.status(400).json({ message: error.message });
   }
 };
 
 const updatePayment = async (req, res) => {
   try {
+    const { orderId, customerName, amount, paymentMethod, status, notes, paymentDate } = req.body;
+    
+    // Create update data compatible with PaymentTransaction schema
+    const updateData = {
+      orderId: orderId || req.body.orderId,
+      customerName,
+      amount: parseFloat(amount),
+      paymentMethod: paymentMethod === 'cash' ? 'Cash' : 
+                    paymentMethod === 'card' ? 'Credit Card' :
+                    paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
+                    paymentMethod === 'mobile_payment' ? 'PayPal' : 'Cash',
+      status: status === 'pending' ? 'Pending' :
+              status === 'completed' ? 'Completed' :
+              status === 'failed' ? 'Failed' : 'Pending',
+      netAmount: parseFloat(amount),
+      notes,
+      paymentDate: paymentDate ? new Date(paymentDate) : new Date()
+    };
+    
     const payment = await PaymentTransaction.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true }
     );
     if (!payment) {
@@ -522,6 +569,7 @@ const updatePayment = async (req, res) => {
     }
     res.status(200).json(payment);
   } catch (error) {
+    console.error('Error updating payment:', error);
     res.status(400).json({ message: error.message });
   }
 };
