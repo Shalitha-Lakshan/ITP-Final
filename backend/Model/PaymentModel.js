@@ -8,13 +8,11 @@ const paymentTransactionSchema = new mongoose.Schema({
     unique: true
   },
   orderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'SalesOrder',
+    type: String,
     required: true
   },
   customerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Customer',
+    type: String,
     required: true
   },
   customerName: {
@@ -88,13 +86,11 @@ const invoiceSchema = new mongoose.Schema({
     unique: true
   },
   orderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'SalesOrder',
+    type: String,
     required: true
   },
   customerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Customer',
+    type: String,
     required: true
   },
   customerName: {
