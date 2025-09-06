@@ -12,6 +12,8 @@ import {
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import LogoutButton from "../common/LogoutButton";
+import UserManagementForm from "./UserManagementForm";
+import UserManagementTable from "./UserManagementTable";
 
 // Mock Data
 const auditLogs = [
@@ -69,6 +71,9 @@ export default function AdminDashboard() {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showStaffModal, setShowStaffModal] = useState(false);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [users, setUsers] = useState([]);
 
   const tabs = [
     { id: "overview", name: "Admin Overview", icon: <Shield size={20} /> },
@@ -77,6 +82,92 @@ export default function AdminDashboard() {
     { id: "staff", name: "Staff Management", icon: <UserCheck size={20} /> },
     { id: "settings", name: "System Settings", icon: <Settings size={20} /> },
   ];
+
+  // User Management Functions
+  const handleAddUser = () => {
+    setEditingUser(null);
+    setShowUserForm(true);
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setShowUserForm(true);
+  };
+
+  const handleSubmitUser = async (userData) => {
+    if (editingUser) {
+      // Update existing user
+      setUsers(prev => prev.map(user => 
+        user.id === editingUser.id ? { ...userData, id: editingUser.id } : user
+      ));
+      alert('User updated successfully!');
+    } else {
+      // Add new user
+      const newUser = {
+        ...userData,
+        id: Math.max(...users.map(u => u.id)) + 1,
+        createdDate: new Date().toISOString().split('T')[0],
+        lastLogin: 'Never'
+      };
+      setUsers(prev => [...prev, newUser]);
+      alert('User created successfully!');
+    }
+    setShowUserForm(false);
+    setEditingUser(null);
+  };
+
+  const handleDeleteUser = (userId) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      setUsers(prev => prev.filter(user => user.id !== userId));
+      alert('User deleted successfully!');
+    }
+  };
+
+  const handleToggleUserStatus = (userId, newStatus) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, status: newStatus } : user
+    ));
+    alert(`User ${newStatus.toLowerCase()} successfully!`);
+  };
+
+  const handleResetPassword = (userId) => {
+    if (window.confirm('Are you sure you want to reset this user\'s password?')) {
+      // In a real app, this would generate a new password and send it via email
+      alert('Password reset email sent to user!');
+    }
+  };
+
+  const handleViewProfile = (user) => {
+    setSelectedUser(user);
+    setShowUserModal(true);
+  };
+
+  const handleExportUsers = (usersToExport) => {
+    // Simple CSV export
+    const headers = ['ID', 'Name', 'Email', 'Phone', 'Role', 'Status', 'Points', 'Created Date', 'Last Login'];
+    const csvContent = [
+      headers.join(','),
+      ...usersToExport.map(user => [
+        user.id,
+        `"${user.name}"`,
+        user.email,
+        user.phone || '',
+        user.role,
+        user.status,
+        user.points || 0,
+        user.createdDate,
+        user.lastLogin
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   const renderOverview = () => (
     <div className="space-y-8">
@@ -234,79 +325,102 @@ export default function AdminDashboard() {
   );
 
   const renderUserManagement = () => (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <Users className="w-4 h-4 text-white" />
+    <div className="space-y-6">
+      {/* User Form Modal */}
+      {showUserForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <UserManagementForm
+                user={editingUser}
+                onSubmit={handleSubmitUser}
+                onCancel={() => {
+                  setShowUserForm(false);
+                  setEditingUser(null);
+                }}
+                isEditing={!!editingUser}
+              />
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">User Management</h3>
-              <p className="text-sm text-gray-600">Manage system users and permissions</p>
-            </div>
-          </div>
-          <div className="flex space-x-3">
-            <Button variant="outline">
-              <Search size={16} className="mr-2" />
-              Search
-            </Button>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-              <Plus size={16} className="mr-2" />
-              Add User
-            </Button>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
-                <th className="text-left p-4 font-semibold text-gray-900 rounded-tl-xl">Name</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Email</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Role</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Department</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Status</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Last Login</th>
-                <th className="text-left p-4 font-semibold text-gray-900 rounded-tr-xl">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="p-4 font-medium text-gray-900">{user.name}</td>
-                  <td className="p-4 text-gray-700">{user.email}</td>
-                  <td className="p-4 text-gray-700">{user.role}</td>
-                  <td className="p-4 text-gray-700">{user.department}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      user.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      user.status === 'Inactive' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-gray-600">{user.lastLogin}</td>
-                  <td className="p-4">
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Eye size={14} />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Edit size={14} />
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                        <Trash2 size={14} />
-                      </Button>
+      )}
+
+      {/* User Profile Modal */}
+      {showUserModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">User Profile</h2>
+                <Button
+                  onClick={() => setShowUserModal(false)}
+                  variant="outline"
+                  size="sm"
+                >
+                  ×
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                    <p className="text-gray-900">{selectedUser.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <p className="text-gray-900">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <p className="text-gray-900">{selectedUser.phone || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Role</label>
+                    <p className="text-gray-900">{selectedUser.role}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <p className="text-gray-900">{selectedUser.status}</p>
+                  </div>
+                  {selectedUser.role === 'Customer' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Points</label>
+                      <p className="text-gray-900">{selectedUser.points || 0}</p>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <p className="text-gray-900">{selectedUser.address || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {/* Add User Button */}
+      <div className="flex justify-between items-center">
+        <Button
+          onClick={handleAddUser}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+        >
+          <Plus size={16} className="mr-2" />
+          Add User
+        </Button>
+      </div>
+
+      {/* User Management Table */}
+      <UserManagementTable
+        users={users}
+        onEdit={handleEditUser}
+        onDelete={handleDeleteUser}
+        onToggleStatus={handleToggleUserStatus}
+        onResetPassword={handleResetPassword}
+        onViewProfile={handleViewProfile}
+        onExport={handleExportUsers}
+      />
+    </div>
   );
 
   const renderStaffManagement = () => (

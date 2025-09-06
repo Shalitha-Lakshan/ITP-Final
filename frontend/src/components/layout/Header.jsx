@@ -63,7 +63,7 @@ function Header() {
             {/* Navigation Links */}
             <nav className="hidden md:flex items-center space-x-6">
               <button
-                onClick={() => navigate('/shop')}
+                onClick={() => navigate('/products')}
                 className="text-gray-700 hover:text-green-600 font-medium transition-colors duration-200"
               >
                 Shop
@@ -238,7 +238,7 @@ function Header() {
             <nav className="space-y-2">
               <button
                 onClick={() => {
-                  navigate('/shop');
+                  navigate('/products');
                   setIsMobileMenuOpen(false);
                 }}
                 className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
