@@ -16,6 +16,8 @@ import FinanceCharts from "./FinanceCharts";
 import CustomerPaymentsManagement from "./CustomerPaymentsManagement";
 import EmployeePaymentsManagement from "./EmployeePaymentsManagement";
 import PaymentCRUD from "./PaymentCRUD";
+import PaymentMethodsManagement from "./PaymentMethodsManagement";
+import PaymentProcessing from "./PaymentProcessing";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import LogoutButton from "../common/LogoutButton";
@@ -35,8 +37,10 @@ export default function UnifiedFinanceDashboard() {
   const tabs = [
     { id: "overview", name: "Financial Overview", icon: <DollarSign size={20} /> },
     { id: "analytics", name: "Financial Analytics", icon: <TrendingUp size={20} /> },
-    { id: "customer-payments", name: "Customer Payments", icon: <CreditCard size={20} /> },
-    { id: "employee-payments", name: "Employee Payments", icon: <Users size={20} /> },
+    { id: "payment-methods", name: "Payment Methods", icon: <CreditCard size={20} /> },
+    { id: "payment-processing", name: "Payment Processing", icon: <Target size={20} /> },
+    { id: "customer-payments", name: "Customer Payments", icon: <Users size={20} /> },
+    { id: "employee-payments", name: "Employee Payments", icon: <Building size={20} /> },
     { id: "payment-crud", name: "Payment Records", icon: <FileText size={20} /> },
     { id: "payroll", name: "Employee Payroll", icon: <Briefcase size={20} /> },
   ];
@@ -267,6 +271,10 @@ export default function UnifiedFinanceDashboard() {
         return renderOverview();
       case "analytics":
         return renderAnalytics();
+      case "payment-methods":
+        return <PaymentMethodsManagement />;
+      case "payment-processing":
+        return <PaymentProcessing />;
       case "customer-payments":
         return <CustomerPaymentsManagement />;
       case "employee-payments":
