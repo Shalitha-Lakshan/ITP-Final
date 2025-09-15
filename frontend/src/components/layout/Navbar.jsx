@@ -147,7 +147,7 @@ function Navbar() {
                         
                         <button
                           onClick={() => {
-                            navigate('/shop');
+                            navigate('/products');
                             setIsProfileMenuOpen(false);
                           }}
                           className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
@@ -263,7 +263,7 @@ function Navbar() {
                     <span>Dashboard</span>
                   </Link>
                   <Link 
-                    to="/shop" 
+                    to="/products" 
                     className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 transition-all duration-300"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

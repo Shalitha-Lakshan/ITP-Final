@@ -252,12 +252,20 @@ const ProductionDashboard = () => {
   // Fetch products from database
   const fetchProducts = async () => {
     try {
+      console.log('Fetching products from database...');
       const response = await axios.get('http://localhost:5000/api/products');
+      console.log('Products response:', response.data);
+      
       if (response.data.products) {
         setProducts(response.data.products);
+        console.log('Products loaded:', response.data.products.length, 'items');
+      } else if (response.data && Array.isArray(response.data)) {
+        setProducts(response.data);
+        console.log('Products loaded:', response.data.length, 'items');
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      console.error('Error response:', error.response?.data);
       // Don't show alert for fetch errors, just log them
     }
   };
@@ -319,27 +327,56 @@ const ProductionDashboard = () => {
   // Add product to database
   const handleAddProduct = async (e) => {
     e.preventDefault();
+    
+    console.log('Form submitted with data:', newProduct);
+    
+    // Validate required fields
     if (!newProduct.name || !newProduct.price || !newProduct.category) {
       alert('Please fill in all required fields: Product Name, Price, and Category');
       return;
     }
 
+    // Validate name format
+    if (!/^[A-Za-z\s]+$/.test(newProduct.name)) {
+      alert('Product name can only contain letters and spaces');
+      return;
+    }
+
+    // Validate price format
+    if (!/^\d{1,4}(\.\d{1,2})?$/.test(newProduct.price)) {
+      alert('Price must be maximum 4 digits with optional decimal (e.g., 1234.56)');
+      return;
+    }
+
     try {
+      // First check if backend server is running
+      try {
+        await axios.get('http://localhost:5000/api/health');
+        console.log('Backend server is running');
+      } catch (healthError) {
+        alert('Backend server is not running. Please start the backend server first.');
+        return;
+      }
+
       const productData = {
-        name: newProduct.name,
+        name: newProduct.name.trim(),
         price: parseFloat(newProduct.price),
         stock: parseInt(newProduct.stock) || 0,
-        imageUrl: newProduct.imageUrl,
-        description: newProduct.description,
+        imageUrl: newProduct.imageUrl || '',
+        description: newProduct.description?.trim() || '',
         category: newProduct.category,
         points: parseInt(newProduct.points) || 0,
       };
 
+      console.log('Sending product data:', productData);
+
       const response = await axios.post('http://localhost:5000/api/products', productData);
       
+      console.log('Server response:', response.data);
+      
       if (response.status === 201) {
-        // Add to local state for immediate display
-        setProducts([...products, response.data.product]);
+        // Refresh products list from database
+        await fetchProducts();
         
         // Reset form
         setNewProduct({
@@ -357,15 +394,19 @@ const ProductionDashboard = () => {
       }
     } catch (error) {
       console.error('Error creating product:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       
       let errorMessage = 'Failed to create product. ';
       
       if (error.response?.data?.message) {
         errorMessage += error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        errorMessage += error.response.data.errors.join(', ');
       } else if (error.code === 'ECONNREFUSED') {
-        errorMessage += 'Cannot connect to backend server. Please ensure the backend server is running.';
+        errorMessage += 'Cannot connect to backend server. Please ensure the backend server is running on port 5000.';
       } else {
-        errorMessage += 'Please try again.';
+        errorMessage += 'Please check the console for more details and try again.';
       }
       
       alert(errorMessage);

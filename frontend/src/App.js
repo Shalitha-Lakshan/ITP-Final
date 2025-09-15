@@ -45,6 +45,7 @@ function App() {
           <Route path="/faq" element={<FAQ />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/help" element={<HelpCenter />} />
+          
 
           {/* Protected Routes - General User */}
           <Route 
