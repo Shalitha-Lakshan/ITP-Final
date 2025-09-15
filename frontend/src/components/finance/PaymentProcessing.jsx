@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
 import { 
   CreditCard, 
   DollarSign, 
@@ -16,7 +18,9 @@ import {
   Eye,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  MoreVertical,
+  TrendingUp
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
