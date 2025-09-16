@@ -379,11 +379,11 @@ export const financialReportsApi = {
 
 // Utility functions
 export const paymentUtils = {
-  // Format currency
-  formatCurrency: (amount, currency = 'INR') => {
-    return new Intl.NumberFormat('en-IN', {
+  // Format currency (LKR)
+  formatCurrency: (amount) => {
+    return new Intl.NumberFormat('en-LK', {
       style: 'currency',
-      currency: currency,
+      currency: 'LKR',
       minimumFractionDigits: 2
     }).format(amount);
   },

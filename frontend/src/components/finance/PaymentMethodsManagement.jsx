@@ -1,22 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
 import { 
   CreditCard, 
   Plus, 
   Edit, 
   Trash2, 
   DollarSign, 
-  TrendingUp, 
   AlertCircle,
   CheckCircle,
   Clock,
   BarChart3,
   Search,
-  Filter,
-  Settings,
-  Eye,
-  MoreVertical
+  Settings
 } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -35,88 +29,25 @@ const PaymentMethodsManagement = () => {
     description: ''
   });
 
-  // Sample data for payment methods
-  const samplePaymentMethods = [
-    {
-      id: 1,
-      name: 'Visa/Mastercard',
-      type: 'card',
-      isActive: true,
-      processingFee: 2.9,
-      transactionLimit: 50000,
-      monthlyVolume: 125000,
-      successRate: 98.5,
-      description: 'Credit and debit card payments'
-    },
-    {
-      id: 2,
-      name: 'PayPal',
-      type: 'digital_wallet',
-      isActive: true,
-      processingFee: 3.4,
-      transactionLimit: 25000,
-      monthlyVolume: 85000,
-      successRate: 97.2,
-      description: 'PayPal digital wallet payments'
-    },
-    {
-      id: 3,
-      name: 'Bank Transfer',
-      type: 'bank_transfer',
-      isActive: true,
-      processingFee: 1.5,
-      transactionLimit: 100000,
-      monthlyVolume: 200000,
-      successRate: 99.1,
-      description: 'Direct bank transfers'
-    },
-    {
-      id: 4,
-      name: 'Cash on Delivery',
-      type: 'cash',
-      isActive: false,
-      processingFee: 0,
-      transactionLimit: 10000,
-      monthlyVolume: 45000,
-      successRate: 95.8,
-      description: 'Cash payment on delivery'
-    },
-    {
-      id: 5,
-      name: 'Mobile Payment',
-      type: 'mobile',
-      isActive: true,
-      processingFee: 2.1,
-      transactionLimit: 15000,
-      monthlyVolume: 65000,
-      successRate: 96.8,
-      description: 'Mobile wallet payments'
-    }
-  ];
-
+  // Sample data for charts
   const distributionData = [
-    { name: 'Credit Cards', value: 45, amount: 125000, color: '#0088FE' },
-    { name: 'Bank Transfer', value: 35, amount: 200000, color: '#00C49F' },
-    { name: 'PayPal', value: 15, amount: 85000, color: '#FFBB28' },
-    { name: 'Mobile Payment', value: 12, amount: 65000, color: '#FF8042' },
-    { name: 'Cash', value: 8, amount: 45000, color: '#8884D8' }
+    { name: 'Credit Cards', value: 45, color: '#0088FE' },
+    { name: 'Bank Transfer', value: 25, color: '#00C49F' },
+    { name: 'Digital Wallets', value: 20, color: '#FFBB28' },
+    { name: 'Mobile Payments', value: 10, color: '#FF8042' }
   ];
 
   const trendsData = [
-    { month: 'Jan', cards: 45000, bank: 65000, paypal: 25000, mobile: 15000, cash: 12000 },
-    { month: 'Feb', cards: 52000, bank: 70000, paypal: 28000, mobile: 18000, cash: 14000 },
-    { month: 'Mar', cards: 48000, bank: 75000, paypal: 30000, mobile: 20000, cash: 16000 },
-    { month: 'Apr', cards: 61000, bank: 80000, paypal: 32000, mobile: 22000, cash: 18000 },
-    { month: 'May', cards: 55000, bank: 85000, paypal: 35000, mobile: 25000, cash: 20000 },
-    { month: 'Jun', cards: 67000, bank: 90000, paypal: 38000, mobile: 28000, cash: 22000 }
+    { month: 'Jan', cards: 45000, bank: 32000, paypal: 18000, mobile: 12000, cash: 8000 },
+    { month: 'Feb', cards: 52000, bank: 38000, paypal: 22000, mobile: 15000, cash: 9000 },
+    { month: 'Mar', cards: 48000, bank: 35000, paypal: 25000, mobile: 18000, cash: 7000 },
+    { month: 'Apr', cards: 61000, bank: 42000, paypal: 28000, mobile: 21000, cash: 10000 },
+    { month: 'May', cards: 55000, bank: 39000, paypal: 24000, mobile: 19000, cash: 8500 },
+    { month: 'Jun', cards: 67000, bank: 45000, paypal: 30000, mobile: 23000, cash: 11000 }
   ];
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setPaymentMethods(samplePaymentMethods);
-      setLoading(false);
-    }, 1000);
+    setLoading(false);
   }, []);
 
   const handleInputChange = (e) => {
@@ -223,7 +154,7 @@ const PaymentMethodsManagement = () => {
               +5.2%
             </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">₹4,75,000</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">LKR 4,75,000</h3>
           <p className="text-gray-600 text-sm">Successful Payments</p>
         </div>
 
@@ -236,7 +167,7 @@ const PaymentMethodsManagement = () => {
               +2.1%
             </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">₹87,500</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">LKR 87,500</h3>
           <p className="text-gray-600 text-sm">Pending Payments</p>
         </div>
 
@@ -249,7 +180,7 @@ const PaymentMethodsManagement = () => {
               -1.3%
             </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">₹7,200</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">LKR 7,200</h3>
           <p className="text-gray-600 text-sm">Failed Payments</p>
         </div>
 
@@ -271,7 +202,7 @@ const PaymentMethodsManagement = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
           <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <PieChart className="w-5 h-5 mr-2 text-blue-600" />
+            <BarChart3 className="w-5 h-5 mr-2 text-blue-600" />
             Payment Method Distribution
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -305,7 +236,7 @@ const PaymentMethodsManagement = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => [`₹${value.toLocaleString()}`, '']} />
+              <Tooltip formatter={(value) => [`LKR ${value.toLocaleString()}`, '']} />
               <Legend />
               <Bar dataKey="cards" stackId="a" fill="#0088FE" name="Cards" />
               <Bar dataKey="bank" stackId="a" fill="#00C49F" name="Bank Transfer" />
@@ -392,11 +323,11 @@ const PaymentMethodsManagement = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Transaction Limit</span>
-                  <span className="font-medium">₹{method.transactionLimit.toLocaleString()}</span>
+                  <span className="font-medium">LKR {method.transactionLimit.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Monthly Volume</span>
-                  <span className="font-medium">₹{method.monthlyVolume.toLocaleString()}</span>
+                  <span className="font-medium">LKR {method.monthlyVolume.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Success Rate</span>
@@ -460,7 +391,7 @@ const PaymentMethodsManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Limit (₹)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Limit (LKR)</label>
                 <input
                   type="number"
                   name="transactionLimit"

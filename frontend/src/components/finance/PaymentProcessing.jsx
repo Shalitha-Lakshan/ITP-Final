@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
 import { 
   CreditCard, 
   DollarSign, 
@@ -9,20 +7,12 @@ import {
   Clock, 
   Send, 
   Receipt, 
-  User, 
-  Calendar,
   Search,
-  Filter,
-  Download,
   RefreshCw,
-  Eye,
-  Edit,
-  Trash2,
   Plus,
-  MoreVertical,
-  TrendingUp
+  Eye
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const PaymentProcessing = () => {
   const [activeTab, setActiveTab] = useState('process');
@@ -41,89 +31,18 @@ const PaymentProcessing = () => {
     invoiceNumber: ''
   });
 
-  // Sample payment data
-  const samplePayments = [
-    {
-      id: 'PAY001',
-      customerId: 'CUST001',
-      customerName: 'John Doe',
-      amount: 15000,
-      paymentMethod: 'card',
-      status: 'completed',
-      description: 'Product purchase - Recycled bottles',
-      dueDate: '2024-01-15',
-      processedDate: '2024-01-14',
-      invoiceNumber: 'INV-2024-001',
-      transactionId: 'TXN123456789'
-    },
-    {
-      id: 'PAY002',
-      customerId: 'CUST002',
-      customerName: 'Jane Smith',
-      amount: 8500,
-      paymentMethod: 'bank_transfer',
-      status: 'pending',
-      description: 'Bulk recycling service',
-      dueDate: '2024-01-20',
-      processedDate: null,
-      invoiceNumber: 'INV-2024-002',
-      transactionId: null
-    },
-    {
-      id: 'PAY003',
-      customerId: 'CUST003',
-      customerName: 'EcoTech Solutions',
-      amount: 25000,
-      paymentMethod: 'paypal',
-      status: 'processing',
-      description: 'Monthly recycling contract',
-      dueDate: '2024-01-18',
-      processedDate: null,
-      invoiceNumber: 'INV-2024-003',
-      transactionId: 'TXN987654321'
-    },
-    {
-      id: 'PAY004',
-      customerId: 'CUST004',
-      customerName: 'Green Corp',
-      amount: 12000,
-      paymentMethod: 'card',
-      status: 'failed',
-      description: 'Plastic bottle collection',
-      dueDate: '2024-01-16',
-      processedDate: '2024-01-16',
-      invoiceNumber: 'INV-2024-004',
-      transactionId: null
-    },
-    {
-      id: 'PAY005',
-      customerId: 'CUST005',
-      customerName: 'Sustainable Industries',
-      amount: 35000,
-      paymentMethod: 'bank_transfer',
-      status: 'completed',
-      description: 'Enterprise recycling program',
-      dueDate: '2024-01-12',
-      processedDate: '2024-01-11',
-      invoiceNumber: 'INV-2024-005',
-      transactionId: 'TXN456789123'
-    }
-  ];
-
+  // Sample data for payment trends chart
   const paymentTrends = [
-    { month: 'Jul', completed: 45000, pending: 12000, failed: 3000 },
-    { month: 'Aug', completed: 52000, pending: 15000, failed: 2500 },
-    { month: 'Sep', completed: 48000, pending: 18000, failed: 4000 },
-    { month: 'Oct', completed: 61000, pending: 14000, failed: 2000 },
-    { month: 'Nov', completed: 55000, pending: 16000, failed: 3500 },
-    { month: 'Dec', completed: 67000, pending: 13000, failed: 2800 }
+    { month: 'Jan', completed: 85000, pending: 15000, failed: 3000 },
+    { month: 'Feb', completed: 92000, pending: 18000, failed: 2500 },
+    { month: 'Mar', completed: 78000, pending: 22000, failed: 4000 },
+    { month: 'Apr', completed: 105000, pending: 12000, failed: 2000 },
+    { month: 'May', completed: 98000, pending: 16000, failed: 3500 },
+    { month: 'Jun', completed: 115000, pending: 14000, failed: 2800 }
   ];
 
   useEffect(() => {
-    setTimeout(() => {
-      setPayments(samplePayments);
-      setLoading(false);
-    }, 1000);
+    setLoading(false);
   }, []);
 
   const handleInputChange = (e) => {
@@ -271,7 +190,7 @@ const PaymentProcessing = () => {
                   Total
                 </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">₹{totalStats.total.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">LKR {totalStats.total.toLocaleString()}</h3>
               <p className="text-gray-600 text-sm">Total Payments</p>
             </div>
 
@@ -284,7 +203,7 @@ const PaymentProcessing = () => {
                   Success
                 </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">₹{totalStats.completed.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">LKR {totalStats.completed.toLocaleString()}</h3>
               <p className="text-gray-600 text-sm">Completed Payments</p>
             </div>
 
@@ -297,7 +216,7 @@ const PaymentProcessing = () => {
                   Pending
                 </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">₹{totalStats.pending.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">LKR {totalStats.pending.toLocaleString()}</h3>
               <p className="text-gray-600 text-sm">Pending Payments</p>
             </div>
 
@@ -310,7 +229,7 @@ const PaymentProcessing = () => {
                   Failed
                 </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">₹{totalStats.failed.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">LKR {totalStats.failed.toLocaleString()}</h3>
               <p className="text-gray-600 text-sm">Failed Payments</p>
             </div>
           </div>
@@ -376,7 +295,7 @@ const PaymentProcessing = () => {
                         <div className="text-sm text-gray-500">{payment.description}</div>
                       </td>
                       <td className="p-4">
-                        <div className="font-bold text-gray-900">₹{payment.amount.toLocaleString()}</div>
+                        <span className="text-2xl font-bold text-gray-900">LKR 2,45,000</span>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center space-x-2">
@@ -439,7 +358,7 @@ const PaymentProcessing = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`₹${value.toLocaleString()}`, '']} />
+                <Tooltip formatter={(value) => [`LKR ${value.toLocaleString()}`, '']} />
                 <Legend />
                 <Bar dataKey="completed" stackId="a" fill="#10B981" name="Completed" />
                 <Bar dataKey="pending" stackId="a" fill="#F59E0B" name="Pending" />
@@ -479,7 +398,7 @@ const PaymentProcessing = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount (LKR)</label>
                 <input
                   type="number"
                   name="amount"

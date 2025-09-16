@@ -1,14 +1,13 @@
 // src/components/finance/UnifiedFinanceDashboard.jsx
 import React, { useState } from "react";
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
 } from "recharts";
 import { 
-  DollarSign, CreditCard, TrendingDown, FileText, TrendingUp, 
-  ArrowUpRight, ArrowDownRight, Calendar, Filter, Download,
-  Users, Building, Briefcase, Target, AlertCircle, CheckCircle,
-  Clock, XCircle, Plus, Search
+  DollarSign, CreditCard, FileText, TrendingUp, 
+  Users, Building, Briefcase, Target, CheckCircle,
+  Clock, XCircle, Plus, Filter, Download, Calendar
 } from "lucide-react";
 import EmployeePayroll from "./EmployeePayroll";
 import OverviewCards from "./OverviewCards";
@@ -22,17 +21,46 @@ import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import LogoutButton from "../common/LogoutButton";
 
-// Mock data removed - to be replaced with API calls
-const revenueExpensesData = [];
-const expenseBreakdown = [];
-const paymentMethodData = [];
-const monthlyPaymentData = [];
-
-const recentTransactions = [];
-const pendingPayments = [];
+// Data will be fetched from API
 
 export default function UnifiedFinanceDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Sample data for charts
+  const expenseBreakdown = [
+    { name: 'Operations', value: 35, color: '#0088FE' },
+    { name: 'Marketing', value: 25, color: '#00C49F' },
+    { name: 'Salaries', value: 30, color: '#FFBB28' },
+    { name: 'Utilities', value: 10, color: '#FF8042' }
+  ];
+
+  const revenueExpensesData = [
+    { month: 'Jan', revenue: 65000, expenses: 45000 },
+    { month: 'Feb', revenue: 72000, expenses: 48000 },
+    { month: 'Mar', revenue: 68000, expenses: 52000 },
+    { month: 'Apr', revenue: 85000, expenses: 55000 },
+    { month: 'May', revenue: 78000, expenses: 51000 },
+    { month: 'Jun', revenue: 92000, expenses: 58000 }
+  ];
+
+  const paymentMethodData = [
+    { method: 'Credit Card', amount: 45000 },
+    { method: 'Bank Transfer', amount: 32000 },
+    { method: 'PayPal', amount: 18000 },
+    { method: 'Cash', amount: 12000 }
+  ];
+
+  const recentTransactions = [
+    { id: 1, customer: 'John Doe', amount: 1250, status: 'completed', date: '2024-01-15' },
+    { id: 2, customer: 'Jane Smith', amount: 850, status: 'pending', date: '2024-01-14' },
+    { id: 3, customer: 'Bob Johnson', amount: 2100, status: 'completed', date: '2024-01-13' }
+  ];
+
+  const pendingPayments = [
+    { id: 1, customer: 'Alice Brown', amount: 750, dueDate: '2024-01-20' },
+    { id: 2, customer: 'Charlie Wilson', amount: 1200, dueDate: '2024-01-22' },
+    { id: 3, customer: 'Diana Davis', amount: 950, dueDate: '2024-01-25' }
+  ];
 
   const tabs = [
     { id: "overview", name: "Financial Overview", icon: <DollarSign size={20} /> },
@@ -97,58 +125,6 @@ export default function UnifiedFinanceDashboard() {
     </div>
   );
 
-  const renderPayments = () => (
-    <div className="space-y-8">
-      {/* Payment Method Distribution */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Payment Methods Distribution</h3>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus size={16} className="mr-2" />
-              Add Payment Method
-            </Button>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={paymentMethodData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="method" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="amount" fill="#3B82F6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Payment Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-br from-green-50 to-green-100">
-          <CardContent className="p-6 text-center">
-            <CheckCircle className="mx-auto mb-2 text-green-600" size={32} />
-            <p className="text-2xl font-bold text-green-900">$75K</p>
-            <p className="text-sm text-green-700">Successful Payments</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100">
-          <CardContent className="p-6 text-center">
-            <Clock className="mx-auto mb-2 text-yellow-600" size={32} />
-            <p className="text-2xl font-bold text-yellow-900">$14.5K</p>
-            <p className="text-sm text-yellow-700">Pending Payments</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-red-50 to-red-100">
-          <CardContent className="p-6 text-center">
-            <XCircle className="mx-auto mb-2 text-red-600" size={32} />
-            <p className="text-2xl font-bold text-red-900">$1.2K</p>
-            <p className="text-sm text-red-700">Failed Payments</p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
 
   const renderTransactions = () => (
     <Card>
@@ -184,7 +160,7 @@ export default function UnifiedFinanceDashboard() {
                 <tr key={transaction.id} className="border-b hover:bg-gray-50">
                   <td className="p-2 font-mono text-sm">{transaction.id}</td>
                   <td className="p-2">{transaction.customer}</td>
-                  <td className="p-2 font-semibold">${transaction.amount.toLocaleString()}</td>
+                  <td className="p-2 font-semibold">₹{transaction.amount.toLocaleString()}</td>
                   <td className="p-2">{transaction.method}</td>
                   <td className="p-2">
                     <span className={`px-2 py-1 rounded-full text-xs ${
@@ -242,7 +218,7 @@ export default function UnifiedFinanceDashboard() {
                   <td className="p-2 font-mono text-sm">{payment.id}</td>
                   <td className="p-2">{payment.invoice}</td>
                   <td className="p-2">{payment.customer}</td>
-                  <td className="p-2 font-semibold">${payment.amount.toLocaleString()}</td>
+                  <td className="p-2 font-semibold">₹{payment.amount.toLocaleString()}</td>
                   <td className="p-2">{payment.dueDate}</td>
                   <td className="p-2">
                     <span className={`px-2 py-1 rounded-full text-xs ${
