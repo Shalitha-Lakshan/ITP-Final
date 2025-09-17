@@ -72,13 +72,16 @@ function CartPage() {
       return;
     }
 
+
     try {
       const userId = user.id || user._id;
-      await axios.delete(`http://localhost:5000/api/cart/clear/${userId}`);
-      setCartItems([]);
-      window.dispatchEvent(new Event('cartUpdated'));
+      const response = await axios.delete(`http://localhost:5000/api/cart/clear/${userId}`);
       
-      console.log('Cart cleared successfully');
+      if (response.status === 200) {
+        setCartItems([]);
+        window.dispatchEvent(new Event('cartUpdated'));
+        alert('Cart cleared successfully!');
+      }
     } catch (error) {
       console.error('Error clearing cart:', error);
       alert('Failed to clear cart. Please try again.');
