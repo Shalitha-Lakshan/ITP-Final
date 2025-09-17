@@ -339,6 +339,125 @@ const updatePaymentMethod = async (req, res) => {
   }
 };
 
+// Payment CRUD endpoints
+const getAllPayments = async (req, res) => {
+  try {
+    const payments = await PaymentTransaction.find()
+      .sort({ createdAt: -1 });
+    res.status(200).json(payments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const createPayment = async (req, res) => {
+  try {
+    const { orderId, customerName, amount, paymentMethod, status, notes, paymentDate } = req.body;
+    
+    // Generate a unique transaction ID
+    const transactionId = `PAY${Date.now()}`;
+    
+    // Create payment data compatible with PaymentTransaction schema
+    const paymentData = {
+      transactionId,
+      orderId: orderId || `ORD${Date.now()}`, // Generate order ID if not provided
+      customerId: `CUST${Date.now()}`, // Generate customer ID (you might want to link to actual customer)
+      customerName,
+      amount: parseFloat(amount),
+      currency: 'LKR',
+      paymentMethod: paymentMethod === 'cash' ? 'Cash' : 
+                    paymentMethod === 'card' ? 'Credit Card' :
+                    paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
+                    paymentMethod === 'mobile_payment' ? 'PayPal' : 'Cash',
+      paymentGateway: paymentMethod === 'cash' ? 'Cash' : 'Other',
+      status: status === 'pending' ? 'Pending' :
+              status === 'completed' ? 'Completed' :
+              status === 'failed' ? 'Failed' : 'Pending',
+      fees: {
+        processingFee: 0,
+        gatewayFee: 0,
+        totalFees: 0
+      },
+      netAmount: parseFloat(amount),
+      notes,
+      paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
+      createdAt: new Date()
+    };
+    
+    const newPayment = new PaymentTransaction(paymentData);
+    const savedPayment = await newPayment.save();
+    res.status(201).json(savedPayment);
+  } catch (error) {
+    console.error('Error creating payment:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const updatePayment = async (req, res) => {
+  try {
+    const { orderId, customerName, amount, paymentMethod, status, notes, paymentDate } = req.body;
+    
+    // Create update data compatible with PaymentTransaction schema
+    const updateData = {
+      orderId: orderId || req.body.orderId,
+      customerName,
+      amount: parseFloat(amount),
+      paymentMethod: paymentMethod === 'cash' ? 'Cash' : 
+                    paymentMethod === 'card' ? 'Credit Card' :
+                    paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
+                    paymentMethod === 'mobile_payment' ? 'PayPal' : 'Cash',
+      status: status === 'pending' ? 'Pending' :
+              status === 'completed' ? 'Completed' :
+              status === 'failed' ? 'Failed' : 'Pending',
+      netAmount: parseFloat(amount),
+      notes,
+      paymentDate: paymentDate ? new Date(paymentDate) : new Date()
+    };
+    
+    const payment = await PaymentTransaction.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+    res.status(200).json(payment);
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const deletePayment = async (req, res) => {
+  try {
+    const payment = await PaymentTransaction.findByIdAndDelete(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+    res.status(200).json({ message: 'Payment deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const updatePaymentStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const payment = await PaymentTransaction.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+    res.status(200).json(payment);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getAllTransactions,
   getTransactionById,
@@ -352,12 +471,6 @@ module.exports = {
   getAllPaymentMethods,
   createPaymentMethod,
   updatePaymentMethod,
-  getFinanceOverview,
-  getChartData,
-  getAllEmployees,
-  createEmployee,
-  updateEmployee,
-  deleteEmployee,
   getAllPayments,
   createPayment,
   updatePayment,

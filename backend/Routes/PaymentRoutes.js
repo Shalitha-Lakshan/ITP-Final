@@ -13,12 +13,6 @@ const {
   getAllPaymentMethods,
   createPaymentMethod,
   updatePaymentMethod,
-  getFinanceOverview,
-  getChartData,
-  getAllEmployees,
-  createEmployee,
-  updateEmployee,
-  deleteEmployee,
   getAllPayments,
   createPayment,
   updatePayment,
@@ -46,17 +40,17 @@ router.get('/methods', getAllPaymentMethods);
 router.post('/methods', createPaymentMethod);
 router.put('/methods/:id', updatePaymentMethod);
 
-// Finance Dashboard Routes
-router.get('/overview', getFinanceOverview);
-router.get('/charts', getChartData);
+// Finance Dashboard Routes - Removed (functions not defined)
+// router.get('/overview', getFinanceOverview);
+// router.get('/charts', getChartData);
 
-// Employee Management Routes
-router.get('/employees', getAllEmployees);
-router.post('/employees', createEmployee);
-router.put('/employees/:id', updateEmployee);
-router.delete('/employees/:id', deleteEmployee);
+// Employee Management Routes - Removed (functions not defined)
+// router.get('/employees', getAllEmployees);
+// router.post('/employees', createEmployee);
+// router.put('/employees/:id', updateEmployee);
+// router.delete('/employees/:id', deleteEmployee);
 
-// Payment CRUD Routes
+// Payment CRUD Routes (matching frontend expectations)
 router.get('/payments', getAllPayments);
 router.post('/payments', createPayment);
 router.put('/payments/:id', updatePayment);

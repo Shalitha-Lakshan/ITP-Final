@@ -9,8 +9,7 @@ const app = express();
 const userRoutes = require("./Routes/UserRoutes");
 const inventoryRoutes = require("./Routes/InventoryRoutes");
 const productionRequestRoutes = require("./Routes/ProductionRequestRoutes");
-const productRoutes = require("./Routes/ProductRoutes");
-const cartRoutes = require("./Routes/CartRoutes");
+const paymentRoutes = require("./Routes/PaymentRoutes");
 
 // CORS Configuration
 const corsOptions = {
@@ -33,8 +32,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/users", userRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/production-requests", productionRequestRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/cart", cartRoutes);
+app.use("/api/finance", paymentRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -86,9 +84,7 @@ app.use('*', (req, res) => {
 // Connect to MongoDB
 mongoose.connect("mongodb+srv://admin:ZL7IayqbTspqb2rd@cluster0.hk1j2kb.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0")
 .then(() => console.log("Connected to MongoDB"))
-.then(async () => {
-    
-    
+.then(() => {
     // Start the server
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
