@@ -5,17 +5,15 @@ import {
   PieChart, Pie, Cell
 } from "recharts";
 import { 
-  DollarSign, CreditCard, FileText, TrendingUp, 
-  Users, Building, Briefcase, Target, CheckCircle,
-  Clock, XCircle, Plus, Filter, Download, Calendar
+  DollarSign, FileText, TrendingUp, 
+  Users, Briefcase, Target,
+  Plus, Filter, Download, Calendar
 } from "lucide-react";
 import EmployeePayroll from "./EmployeePayroll";
 import OverviewCards from "./OverviewCards";
 import FinanceCharts from "./FinanceCharts";
 import CustomerPaymentsManagement from "./CustomerPaymentsManagement";
-import EmployeePaymentsManagement from "./EmployeePaymentsManagement";
 import PaymentCRUD from "./PaymentCRUD";
-import PaymentMethodsManagement from "./PaymentMethodsManagement";
 import PaymentProcessing from "./PaymentProcessing";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
@@ -43,13 +41,6 @@ export default function UnifiedFinanceDashboard() {
     { month: 'Jun', revenue: 92000, expenses: 58000 }
   ];
 
-  const paymentMethodData = [
-    { method: 'Credit Card', amount: 45000 },
-    { method: 'Bank Transfer', amount: 32000 },
-    { method: 'PayPal', amount: 18000 },
-    { method: 'Cash', amount: 12000 }
-  ];
-
   const recentTransactions = [
     { id: 1, customer: 'John Doe', amount: 1250, status: 'completed', date: '2024-01-15' },
     { id: 2, customer: 'Jane Smith', amount: 850, status: 'pending', date: '2024-01-14' },
@@ -65,10 +56,8 @@ export default function UnifiedFinanceDashboard() {
   const tabs = [
     { id: "overview", name: "Financial Overview", icon: <DollarSign size={20} /> },
     { id: "analytics", name: "Financial Analytics", icon: <TrendingUp size={20} /> },
-    { id: "payment-methods", name: "Payment Methods", icon: <CreditCard size={20} /> },
     { id: "payment-processing", name: "Payment Processing", icon: <Target size={20} /> },
     { id: "customer-payments", name: "Customer Payments", icon: <Users size={20} /> },
-    { id: "employee-payments", name: "Employee Payments", icon: <Building size={20} /> },
     { id: "payment-crud", name: "Payment Records", icon: <FileText size={20} /> },
     { id: "payroll", name: "Employee Payroll", icon: <Briefcase size={20} /> },
   ];
@@ -247,14 +236,10 @@ export default function UnifiedFinanceDashboard() {
         return renderOverview();
       case "analytics":
         return renderAnalytics();
-      case "payment-methods":
-        return <PaymentMethodsManagement />;
       case "payment-processing":
         return <PaymentProcessing />;
       case "customer-payments":
         return <CustomerPaymentsManagement />;
-      case "employee-payments":
-        return <EmployeePaymentsManagement />;
       case "payment-crud":
         return <PaymentCRUD />;
       case "payroll":
