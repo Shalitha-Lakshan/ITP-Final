@@ -116,8 +116,8 @@ exports.removeFromCart = async (req, res) => {
 // Clear entire cart
 exports.clearCart = async (req, res) => {
   try {
-    // Get userId from query params or body
-    const userId = req.query.userId || req.body.userId || 'guest';
+    // Get userId from URL params, query params, or body
+    const userId = req.params.userId || req.query.userId || req.body.userId || 'guest';
     
     console.log('Clearing cart for userId:', userId);
     
