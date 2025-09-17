@@ -155,7 +155,7 @@ function CartPage() {
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">{item.productName}</h3>
                     <p className="text-gray-600 text-sm mt-1">{item.description}</p>
-                    <p className="text-green-600 font-bold mt-2">${item.price.toFixed(2)} each</p>
+                    <p className="text-green-600 font-bold mt-2">LKR {parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} each</p>
                   </div>
                   
                   <div className="flex items-center space-x-3">
@@ -179,7 +179,7 @@ function CartPage() {
                   
                   <div className="text-right">
                     <p className="text-lg font-bold text-gray-900">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      LKR {(item.price * item.quantity).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                     <button
                       onClick={() => removeItem(item._id)}
@@ -201,23 +201,26 @@ function CartPage() {
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal ({totalItems} items)</span>
-                    <span className="font-medium">${subtotal.toFixed(2)}</span>
+                    <span className="font-medium">LKR {subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax</span>
-                    <span className="font-medium">${tax.toFixed(2)}</span>
+                    <span className="font-medium">LKR {tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="border-t pt-3">
                     <div className="flex justify-between">
                       <span className="text-lg font-bold">Total</span>
-                      <span className="text-lg font-bold text-green-600">${total.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-green-600">LKR {total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
                 </div>
                 
-                <button className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors mb-3">
+                <Link
+                  to="/checkout"
+                  className="block w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors mb-3 text-center"
+                >
                   Proceed to Checkout
-                </button>
+                </Link>
                 
                 <Link
                   to="/products"
