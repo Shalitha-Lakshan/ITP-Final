@@ -1,11 +1,21 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const handleAddToCart = async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated()) {
+      alert('Please login to add items to cart');
+      navigate('/login');
+      return;
+    }
+
     try {
       const cartData = {
         productId: product.id.toString(),
@@ -14,7 +24,7 @@ function ProductCard({ product }) {
         quantity: 1,
         imageUrl: product.imageUrl,
         description: product.description,
-        userId: 'guest'
+        userId: user.id || user._id
       };
 
       const response = await axios.post('http://localhost:5000/api/cart/add', cartData);

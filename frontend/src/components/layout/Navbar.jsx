@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-function Navbar() {
+function Navbar({ forceWhiteBackground = false }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -42,7 +42,7 @@ function Navbar() {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled 
+      isScrolled || forceWhiteBackground
         ? 'bg-white/95 backdrop-blur-lg shadow-xl border-b border-gray-200/20 text-gray-900' 
         : 'bg-transparent text-white'
     }`}>
@@ -52,14 +52,14 @@ function Navbar() {
           <div className="flex items-center">
             <Link to="/" className="group flex items-center space-x-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                isScrolled ? 'bg-green-600' : 'bg-white/20 backdrop-blur-sm'
+                isScrolled || forceWhiteBackground ? 'bg-green-600' : 'bg-white/20 backdrop-blur-sm'
               }`}>
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </div>
               <span className={`text-2xl font-bold transition-colors duration-300 ${
-                isScrolled ? 'text-gray-900' : 'text-white'
+                isScrolled || forceWhiteBackground ? 'text-gray-900' : 'text-white'
               }`}>
                 Eco<span className="text-green-500">Recycle</span>
               </span>
@@ -74,10 +74,10 @@ function Navbar() {
                 to={link.to}
                 className={`group relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                   location.pathname === link.to
-                    ? isScrolled
+                    ? isScrolled || forceWhiteBackground
                       ? 'text-green-600 bg-green-50'
                       : 'text-green-300 bg-white/20'
-                    : isScrolled
+                    : isScrolled || forceWhiteBackground
                       ? 'text-gray-700 hover:text-green-600 hover:bg-green-50'
                       : 'text-white/90 hover:text-white hover:bg-white/20'
                 }`}
@@ -90,7 +90,7 @@ function Navbar() {
                 </div>
                 {location.pathname === link.to && (
                   <div className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-full ${
-                    isScrolled ? 'bg-green-600' : 'bg-green-300'
+                    isScrolled || forceWhiteBackground ? 'bg-green-600' : 'bg-green-300'
                   }`}></div>
                 )}
               </Link>
@@ -103,13 +103,13 @@ function Navbar() {
                   <button
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                      isScrolled 
+                      isScrolled || forceWhiteBackground
                         ? 'text-gray-700 hover:text-green-600 hover:bg-green-50'
                         : 'text-white/90 hover:text-white hover:bg-white/20'
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      isScrolled ? 'bg-green-600' : 'bg-white/20'
+                      isScrolled || forceWhiteBackground ? 'bg-green-600' : 'bg-white/20'
                     }`}>
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -178,7 +178,7 @@ function Navbar() {
                   <Link 
                     to="/login" 
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                      isScrolled 
+                      isScrolled || forceWhiteBackground
                         ? 'text-gray-700 hover:text-green-600 hover:bg-green-50'
                         : 'text-white/90 hover:text-white hover:bg-white/20'
                     }`}
@@ -188,7 +188,7 @@ function Navbar() {
                   <Link 
                     to="/register" 
                     className={`px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
-                      isScrolled
+                      isScrolled || forceWhiteBackground
                         ? 'bg-green-600 text-white hover:bg-green-700 hover:shadow-green-500/25'
                         : 'bg-white text-green-600 hover:bg-green-50'
                     }`}
@@ -205,7 +205,7 @@ function Navbar() {
             <button
               onClick={toggleMenu}
               className={`inline-flex items-center justify-center p-2 rounded-xl transition-all duration-300 ${
-                isScrolled
+                isScrolled || forceWhiteBackground
                   ? 'text-gray-700 hover:text-green-600 hover:bg-green-50'
                   : 'text-white hover:bg-white/20'
               }`}

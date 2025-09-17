@@ -10,6 +10,8 @@ const userRoutes = require("./Routes/UserRoutes");
 const inventoryRoutes = require("./Routes/InventoryRoutes");
 const productionRequestRoutes = require("./Routes/ProductionRequestRoutes");
 const paymentRoutes = require("./Routes/PaymentRoutes");
+const productRoutes = require("./Routes/ProductRoutes");
+const cartRoutes = require("./Routes/CartRoutes");
 
 // CORS Configuration
 const corsOptions = {
@@ -33,6 +35,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/production-requests", productionRequestRoutes);
 app.use("/api/finance", paymentRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
