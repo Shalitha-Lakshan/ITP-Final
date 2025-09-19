@@ -32,7 +32,6 @@ export default function EmployeePayroll() {
 
   const tabs = [
     { id: "overview", name: "Payroll Overview", icon: <DollarSign size={20} /> },
-    { id: "employees", name: "Employee Management", icon: <Users size={20} /> },
     { id: "calculations", name: "Payroll Calculations", icon: <Calculator size={20} /> },
     { id: "payslips", name: "Payslips", icon: <FileText size={20} /> },
     { id: "reports", name: "Payroll Reports", icon: <BarChart size={20} /> },
@@ -500,7 +499,6 @@ export default function EmployeePayroll() {
   const renderContent = () => {
     switch (activeTab) {
       case "overview": return renderOverview();
-      case "employees": return renderEmployees();
       case "calculations": return renderCalculations();
       case "payslips": return renderPayslips();
       case "reports": return renderReports();

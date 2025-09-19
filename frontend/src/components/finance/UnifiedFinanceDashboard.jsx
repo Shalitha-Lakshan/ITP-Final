@@ -6,10 +6,11 @@ import {
 } from "recharts";
 import { 
   DollarSign, FileText, TrendingUp, 
-  Users, Briefcase, Target,
+  Users, Briefcase, Target, Users as UsersIcon,
   Plus, Filter, Download, Calendar
 } from "lucide-react";
 import EmployeePayroll from "./EmployeePayroll";
+import EmployeeManagement from "./EmployeeManagement";
 import OverviewCards from "./OverviewCards";
 import FinanceCharts from "./FinanceCharts";
 import CustomerPaymentsManagement from "./CustomerPaymentsManagement";
@@ -59,6 +60,7 @@ export default function UnifiedFinanceDashboard() {
     { id: "payment-processing", name: "Payment Processing", icon: <Target size={20} /> },
     { id: "customer-payments", name: "Customer Payments", icon: <Users size={20} /> },
     { id: "payment-crud", name: "Payment Records", icon: <FileText size={20} /> },
+    { id: "employee-management", name: "Employee Management", icon: <UsersIcon size={20} /> },
     { id: "payroll", name: "Employee Payroll", icon: <Briefcase size={20} /> },
   ];
 
@@ -242,6 +244,8 @@ export default function UnifiedFinanceDashboard() {
         return <CustomerPaymentsManagement />;
       case "payment-crud":
         return <PaymentCRUD />;
+      case "employee-management":
+        return <EmployeeManagement />;
       case "payroll":
         return <EmployeePayroll />;
       default:
