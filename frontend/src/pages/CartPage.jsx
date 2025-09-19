@@ -1,22 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   // Load cart items from backend API
   useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
     fetchCartItems();
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   const fetchCartItems = async () => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+
     try {
-      const response = await axios.get('http://localhost:5000/api/cart?userId=guest');
+      const userId = user.id || user._id;
+      const response = await axios.get(`http://localhost:5000/api/cart?userId=${userId}`);
       setCartItems(response.data.cartItems || []);
     } catch (error) {
       console.error('Error fetching cart items:', error);
@@ -54,21 +67,21 @@ function CartPage() {
 
   // Clear entire cart
   const clearCart = async () => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+
+
     try {
-      console.log('Clearing cart...');
-      const response = await axios.delete('http://localhost:5000/api/cart/clear/all?userId=guest');
-      console.log('Clear cart response:', response.data);
+      const userId = user.id || user._id;
+      const response = await axios.delete(`http://localhost:5000/api/cart/clear/${userId}`);
       
-      // Immediately set cart to empty
-      setCartItems([]);
-      
-      // Also fetch from backend to ensure sync
-      await fetchCartItems();
-      
-      // Dispatch event for other components
-      window.dispatchEvent(new Event('cartUpdated'));
-      
-      console.log('Cart cleared successfully');
+      if (response.status === 200) {
+        setCartItems([]);
+        window.dispatchEvent(new Event('cartUpdated'));
+        alert('Cart cleared successfully!');
+      }
     } catch (error) {
       console.error('Error clearing cart:', error);
       alert('Failed to clear cart. Please try again.');
@@ -84,7 +97,7 @@ function CartPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
+        <Navbar forceWhiteBackground={true} />
         <div className="flex justify-center items-center py-20 pt-32">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
         </div>
@@ -95,7 +108,7 @@ function CartPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <Navbar forceWhiteBackground={true} />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Header */}

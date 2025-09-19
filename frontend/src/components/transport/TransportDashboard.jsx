@@ -1,5 +1,5 @@
 // src/components/transport/TransportDashboard.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
@@ -7,48 +7,82 @@ import { Truck, MapPin, Clock, Package, CheckCircle, AlertCircle, Plus, Search, 
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import LogoutButton from "../common/LogoutButton";
+import axios from "axios";
 
-const collectionData = [
-  { month: "Jan", collected: 1200, scheduled: 1400, efficiency: 85.7 },
-  { month: "Feb", collected: 1450, scheduled: 1600, efficiency: 90.6 },
-  { month: "Mar", collected: 1680, scheduled: 1800, efficiency: 93.3 },
-  { month: "Apr", collected: 1920, scheduled: 2000, efficiency: 96.0 },
-  { month: "May", collected: 2100, scheduled: 2200, efficiency: 95.5 },
-];
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
-const routeStatusData = [
-  { name: "Completed", value: 65, count: 26 },
-  { name: "In Progress", value: 20, count: 8 },
-  { name: "Scheduled", value: 10, count: 4 },
-  { name: "Delayed", value: 5, count: 2 },
-];
-
-const activeCollections = [
-  { id: "COL001", location: "Downtown Area", driver: "John Smith", vehicle: "TRK-001", bottles: 450, status: "In Progress", startTime: "08:30", estimatedCompletion: "11:30", progress: 65 },
-  { id: "COL002", location: "Industrial Zone", driver: "Sarah Johnson", vehicle: "TRK-002", bottles: 320, status: "Scheduled", startTime: "09:00", estimatedCompletion: "12:00", progress: 0 },
-  { id: "COL003", location: "Residential District", driver: "Mike Wilson", vehicle: "TRK-003", bottles: 280, status: "Completed", startTime: "07:00", estimatedCompletion: "10:00", progress: 100 },
-  { id: "COL004", location: "Business Park", driver: "Emma Davis", vehicle: "TRK-004", bottles: 380, status: "Delayed", startTime: "08:00", estimatedCompletion: "11:00", progress: 30 },
-];
-
-const transportRoutes = [
-  { id: "RT001", name: "City Center Route", locations: 8, distance: "25 km", avgTime: "3.5 hrs", frequency: "Daily", status: "Active" },
-  { id: "RT002", name: "Suburban Route", locations: 12, distance: "35 km", avgTime: "4.2 hrs", frequency: "Daily", status: "Active" },
-  { id: "RT003", name: "Industrial Route", locations: 6, distance: "18 km", avgTime: "2.8 hrs", frequency: "Twice Daily", status: "Active" },
-  { id: "RT004", name: "Weekend Route", locations: 15, distance: "42 km", avgTime: "5.1 hrs", frequency: "Weekends", status: "Inactive" },
-];
-
-const vehicles = [
-  { id: "TRK-001", type: "Large Truck", capacity: 500, driver: "John Smith", status: "Active", location: "Downtown", fuel: 75, maintenance: "Good" },
-  { id: "TRK-002", type: "Medium Truck", capacity: 350, driver: "Sarah Johnson", status: "Active", location: "Industrial Zone", fuel: 60, maintenance: "Good" },
-  { id: "TRK-003", type: "Small Truck", capacity: 250, driver: "Mike Wilson", status: "Maintenance", location: "Depot", fuel: 90, maintenance: "Service Due" },
-  { id: "TRK-004", type: "Large Truck", capacity: 500, driver: "Emma Davis", status: "Active", location: "Business Park", fuel: 45, maintenance: "Good" },
-];
+// helpers
+const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 export default function TransportDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedCollection, setSelectedCollection] = useState(null);
+  const [collections, setCollections] = useState([]);
+  const [routes, setRoutes] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [collectionData, setCollectionData] = useState([]);
+  const [routeStatusData, setRouteStatusData] = useState([]);
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+        const [collectionsRes, routesRes, vehiclesRes, driversRes, analyticsRes, dashboardRes] = await Promise.all([
+          axios.get(`${API_BASE}/api/transport/collections`),
+          axios.get(`${API_BASE}/api/transport/routes`),
+          axios.get(`${API_BASE}/api/transport/vehicles`),
+          axios.get(`${API_BASE}/api/transport/drivers`),
+          axios.get(`${API_BASE}/api/transport/analytics`),
+          axios.get(`${API_BASE}/api/transport/dashboard`)
+        ]);
+
+        if (!isMounted) return;
+
+        const list = collectionsRes.data || [];
+        setCollections(list);
+        setRoutes(routesRes.data || []);
+        setVehicles(vehiclesRes.data || []);
+        setDrivers(driversRes.data || []);
+        setDashboard(dashboardRes.data || null);
+
+        // monthly trends -> chart
+        const monthly = (analyticsRes.data?.monthlyTrends || []).map(m => {
+          const monthIndex = (m._id?.month || 1) - 1;
+          const collected = m.collected || 0;
+          const scheduled = m.scheduled || 0;
+          const efficiency = scheduled > 0 ? (collected / scheduled) * 100 : 0;
+          return { month: monthNames[monthIndex], collected, scheduled, efficiency: Number(efficiency.toFixed(1)) };
+        });
+        setCollectionData(monthly);
+
+        // status distribution pie
+        const statusCounts = { Completed: 0, "In Progress": 0, Scheduled: 0, Delayed: 0 };
+        for (const c of list) {
+          const s = c.status || 'Scheduled';
+          if (statusCounts[s] !== undefined) statusCounts[s] += 1;
+        }
+        const total = Object.values(statusCounts).reduce((a,b)=>a+b,0) || 1;
+        const routePie = Object.entries(statusCounts).map(([name,count]) => ({ name, count, value: Math.round((count/total)*100) }));
+        setRouteStatusData(routePie);
+
+        setError("");
+      } catch (e) {
+        console.error("Transport data load failed", e);
+        setError("Failed to load transport data.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchAll();
+    return () => { isMounted = false; };
+  }, []);
 
   const menuItems = [
     { name: "Transport Overview", key: "overview", icon: <Truck size={20} /> },
@@ -90,8 +124,8 @@ export default function TransportDashboard() {
             <Package className="text-green-600" size={32} />
             <div>
               <p className="text-gray-500">Bottles Collected Today</p>
-              <h2 className="text-xl font-bold">2,450</h2>
-              <p className="text-sm text-green-600">+15% from yesterday</p>
+              <h2 className="text-xl font-bold">{dashboard?.todayBottles ?? 0}</h2>
+              <p className="text-sm text-green-600">{dashboard ? `${Math.round(dashboard.routeEfficiency || 0)}% avg progress` : ''}</p>
             </div>
           </CardContent>
         </Card>
@@ -100,8 +134,8 @@ export default function TransportDashboard() {
             <Truck className="text-blue-600" size={32} />
             <div>
               <p className="text-gray-500">Active Vehicles</p>
-              <h2 className="text-xl font-bold">3/4</h2>
-              <p className="text-sm text-blue-600">1 in maintenance</p>
+              <h2 className="text-xl font-bold">{dashboard ? `${dashboard.activeVehicles}/${dashboard.totalVehicles}` : '0/0'}</h2>
+              <p className="text-sm text-blue-600">Fleet status</p>
             </div>
           </CardContent>
         </Card>
@@ -110,8 +144,8 @@ export default function TransportDashboard() {
             <MapPin className="text-purple-600" size={32} />
             <div>
               <p className="text-gray-500">Routes Completed</p>
-              <h2 className="text-xl font-bold">26/30</h2>
-              <p className="text-sm text-purple-600">86.7% efficiency</p>
+              <h2 className="text-xl font-bold">{routeStatusData.find(r=>r.name==='Completed')?.count || 0}/{collections.length}</h2>
+              <p className="text-sm text-purple-600">{dashboard ? `${Math.round(dashboard.routeEfficiency || 0)}% avg efficiency` : ''}</p>
             </div>
           </CardContent>
         </Card>
@@ -120,8 +154,8 @@ export default function TransportDashboard() {
             <Clock className="text-orange-600" size={32} />
             <div>
               <p className="text-gray-500">Avg Collection Time</p>
-              <h2 className="text-xl font-bold">3.2 hrs</h2>
-              <p className="text-sm text-orange-600">-0.3 hrs from last week</p>
+              <h2 className="text-xl font-bold">{routes[0]?.estimatedDuration || '—'}</h2>
+              <p className="text-sm text-orange-600">From route estimates</p>
             </div>
           </CardContent>
         </Card>
@@ -195,35 +229,40 @@ export default function TransportDashboard() {
             </tr>
           </thead>
           <tbody>
-            {activeCollections.map(collection => (
-              <tr key={collection.id} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-medium">{collection.id}</td>
+            {collections.map(collection => {
+              const driverName = collection.assignedDriver ? `${collection.assignedDriver.personalInfo?.firstName || ''} ${collection.assignedDriver.personalInfo?.lastName || ''}`.trim() : '—';
+              const vehicleId = collection.assignedVehicle?.vehicleId || '—';
+              const collected = collection.bottleCount?.collected ?? 0;
+              const scheduled = collection.bottleCount?.scheduled ?? 0;
+              const computedProgress = scheduled > 0 ? Math.round((collected / scheduled) * 100) : (collection.progress ?? 0);
+              const start = collection.scheduledTime?.startTime ? new Date(collection.scheduledTime.startTime).toLocaleTimeString() : '—';
+              const eta = collection.scheduledTime?.estimatedCompletionTime ? new Date(collection.scheduledTime.estimatedCompletionTime).toLocaleTimeString() : '—';
+              return (
+              <tr key={collection._id} className="border-b hover:bg-gray-50">
+                <td className="p-3 font-medium">{collection.collectionId || collection._id?.slice(-6)}</td>
                 <td className="p-3">{collection.location}</td>
-                <td className="p-3">{collection.driver}</td>
-                <td className="p-3">{collection.vehicle}</td>
-                <td className="p-3 font-bold">{collection.bottles}</td>
+                <td className="p-3">{driverName}</td>
+                <td className="p-3">{vehicleId}</td>
+                <td className="p-3 font-bold">{collected}</td>
                 <td className="p-3">
                   <div className="flex items-center space-x-2">
-                    {getStatusIcon(collection.status)}
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(collection.status)}`}>
-                      {collection.status}
+                    {getStatusIcon(collection.status || 'Scheduled')}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(collection.status || 'Scheduled')}`}>
+                      {collection.status || 'Scheduled'}
                     </span>
                   </div>
                 </td>
                 <td className="p-3">
                   <div>
-                    <p className="text-sm">Start: {collection.startTime}</p>
-                    <p className="text-sm text-gray-500">ETA: {collection.estimatedCompletion}</p>
+                    <p className="text-sm">Start: {start}</p>
+                    <p className="text-sm text-gray-500">ETA: {eta}</p>
                   </div>
                 </td>
                 <td className="p-3">
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: `${collection.progress}%` }}
-                    ></div>
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${computedProgress}%` }}></div>
                   </div>
-                  <span className="text-xs text-gray-500">{collection.progress}%</span>
+                  <span className="text-xs text-gray-500">{computedProgress}%</span>
                 </td>
                 <td className="p-3">
                   <div className="flex space-x-2">
@@ -232,7 +271,7 @@ export default function TransportDashboard() {
                   </div>
                 </td>
               </tr>
-            ))}
+            );})}
           </tbody>
         </table>
       </div>
@@ -260,18 +299,16 @@ export default function TransportDashboard() {
             </tr>
           </thead>
           <tbody>
-            {transportRoutes.map(route => (
-              <tr key={route.id} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-medium">{route.id}</td>
+            {routes.map(route => (
+              <tr key={route._id} className="border-b hover:bg-gray-50">
+                <td className="p-3 font-medium">{route.routeId || route._id?.slice(-6)}</td>
                 <td className="p-3">{route.name}</td>
-                <td className="p-3">{route.locations} stops</td>
-                <td className="p-3">{route.distance}</td>
-                <td className="p-3">{route.avgTime}</td>
-                <td className="p-3">{route.frequency}</td>
+                <td className="p-3">{Array.isArray(route.locations) ? route.locations.length : (route.locations || 0)} stops</td>
+                <td className="p-3">{route.distance || '—'}</td>
+                <td className="p-3">{route.estimatedDuration || '—'}</td>
+                <td className="p-3">{route.frequency || '—'}</td>
                 <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(route.status)}`}>
-                    {route.status}
-                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor('Active')}`}>Active</span>
                 </td>
                 <td className="p-3">
                   <div className="flex space-x-2">
@@ -296,38 +333,38 @@ export default function TransportDashboard() {
         </div>
         <div className="space-y-4">
           {vehicles.map(vehicle => (
-            <div key={vehicle.id} className="border rounded-lg p-4">
+            <div key={vehicle._id} className="border rounded-lg p-4">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h3 className="font-medium">{vehicle.id} - {vehicle.type}</h3>
-                  <p className="text-sm text-gray-500">Driver: {vehicle.driver}</p>
-                  <p className="text-sm text-gray-500">Capacity: {vehicle.capacity} bottles</p>
+                  <h3 className="font-medium">{vehicle.vehicleId || vehicle._id?.slice(-6)} - {vehicle.type}</h3>
+                  <p className="text-sm text-gray-500">Driver: {vehicle.assignedDriver ? `${vehicle.assignedDriver.personalInfo?.firstName || ''} ${vehicle.assignedDriver.personalInfo?.lastName || ''}`.trim() : '—'}</p>
+                  <p className="text-sm text-gray-500">Capacity: {vehicle.capacity || '—'} bottles</p>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(vehicle.status)}`}>
-                  {vehicle.status}
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(vehicle.status || 'Active')}`}>
+                  {vehicle.status || 'Active'}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-3">
                 <div>
                   <p className="text-xs text-gray-500">Current Location</p>
-                  <p className="text-sm font-medium">{vehicle.location}</p>
+                  <p className="text-sm font-medium">{vehicle.currentLocation?.name || '—'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Fuel Level</p>
                   <div className="flex items-center space-x-2">
                     <div className="w-16 bg-gray-200 rounded-full h-2">
                       <div 
-                        className={`h-2 rounded-full ${vehicle.fuel > 50 ? 'bg-green-600' : vehicle.fuel > 25 ? 'bg-yellow-600' : 'bg-red-600'}`}
-                        style={{ width: `${vehicle.fuel}%` }}
+                        className={`h-2 rounded-full ${(vehicle.fuelLevel ?? 0) > 50 ? 'bg-green-600' : (vehicle.fuelLevel ?? 0) > 25 ? 'bg-yellow-600' : 'bg-red-600'}`}
+                        style={{ width: `${vehicle.fuelLevel ?? 0}%` }}
                       ></div>
                     </div>
-                    <span className="text-xs">{vehicle.fuel}%</span>
+                    <span className="text-xs">{vehicle.fuelLevel ?? 0}%</span>
                   </div>
                 </div>
               </div>
               <div className="flex justify-between items-center mt-3">
-                <span className={`text-xs ${vehicle.maintenance === 'Good' ? 'text-green-600' : 'text-orange-600'}`}>
-                  {vehicle.maintenance}
+                <span className={`text-xs ${(vehicle.maintenanceStatus || 'Good') === 'Good' ? 'text-green-600' : 'text-orange-600'}`}>
+                  {vehicle.maintenanceStatus || 'Good'}
                 </span>
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm">Track</Button>
@@ -353,15 +390,17 @@ export default function TransportDashboard() {
         <div className="mt-4 space-y-2">
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Average Efficiency</span>
-            <span className="text-sm font-medium">92.2%</span>
+            <span className="text-sm font-medium">{collectionData.length ? `${(
+              collectionData.reduce((acc, m) => acc + (m.efficiency || 0), 0) / collectionData.length
+            ).toFixed(1)}%` : '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Total Distance (Month)</span>
-            <span className="text-sm font-medium">2,450 km</span>
+            <span className="text-sm font-medium">—</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Fuel Consumption</span>
-            <span className="text-sm font-medium">485 L</span>
+            <span className="text-sm font-medium">—</span>
           </div>
         </div>
       </Card>
@@ -375,33 +414,31 @@ export default function TransportDashboard() {
         <Button className="bg-indigo-600 text-white"><Plus size={16} className="mr-2" />Add Driver</Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {vehicles.map(vehicle => (
-          <div key={vehicle.id} className="border rounded-lg p-4">
+        {drivers.map(driver => (
+          <div key={driver._id} className="border rounded-lg p-4">
             <div className="flex items-center space-x-3 mb-3">
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                 <Users size={20} className="text-blue-600" />
               </div>
               <div>
-                <h3 className="font-medium">{vehicle.driver}</h3>
-                <p className="text-sm text-gray-500">Vehicle: {vehicle.id}</p>
+                <h3 className="font-medium">{`${driver.personalInfo?.firstName || ''} ${driver.personalInfo?.lastName || ''}`.trim() || '—'}</h3>
+                <p className="text-sm text-gray-500">Vehicle: {driver.assignedVehicle?.vehicleId || '—'}</p>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500">Status</span>
-                <span className={`text-sm font-medium ${vehicle.status === 'Active' ? 'text-green-600' : 'text-orange-600'}`}>
-                  {vehicle.status === 'Maintenance' ? 'Off Duty' : 'On Duty'}
+                <span className={`text-sm font-medium ${(driver.currentStatus || 'On Duty') === 'On Duty' ? 'text-green-600' : 'text-orange-600'}`}>
+                  {driver.currentStatus || 'On Duty'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500">Current Location</span>
-                <span className="text-sm">{vehicle.location}</span>
+                <span className="text-sm">{driver.currentLocation?.name || '—'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500">Collections Today</span>
-                <span className="text-sm font-medium">
-                  {vehicle.status === 'Active' ? Math.floor(Math.random() * 5) + 1 : 0}
-                </span>
+                <span className="text-sm font-medium">—</span>
               </div>
             </div>
             <div className="flex space-x-2 mt-3">
@@ -479,7 +516,14 @@ export default function TransportDashboard() {
         </header>
 
         <div className="p-6">
-          {renderContent()}
+          {error && (
+            <div className="mb-4 p-3 rounded bg-red-50 text-red-700 border border-red-200">{error}</div>
+          )}
+          {loading ? (
+            <div className="w-full py-24 text-center text-gray-500">Loading transport data...</div>
+          ) : (
+            renderContent()
+          )}
         </div>
       </div>
     </div>
