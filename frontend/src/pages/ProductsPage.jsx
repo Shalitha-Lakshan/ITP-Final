@@ -5,6 +5,7 @@ import axios from 'axios';
 import ProductCard from '../components/products/ProductCard';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import { useAuth } from '../context/AuthContext';
 
 function ProductsPage() {
   const [products, setProducts] = useState([]);
@@ -13,14 +14,27 @@ function ProductsPage() {
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItemCount, setCartItemCount] = useState(0);
+  const { user, isAuthenticated } = useAuth();
 
   // Update cart count from backend API
   useEffect(() => {
     const updateCartCount = async () => {
+      if (!isAuthenticated()) {
+        setCartItemCount(0);
+        return;
+      }
+
       try {
-        const response = await fetch('http://localhost:5000/api/cart?userId=guest');
+        const userId = user.id || user._id;
+        const response = await fetch(`http://localhost:5000/api/cart?userId=${userId}`);
         const data = await response.json();
-        setCartItemCount(data.totalItems || 0);
+        
+        if (data.cartItems) {
+          const totalItems = data.cartItems.reduce((total, item) => total + item.quantity, 0);
+          setCartItemCount(totalItems);
+        } else {
+          setCartItemCount(0);
+        }
       } catch (error) {
         console.error('Error fetching cart count:', error);
         setCartItemCount(0);
@@ -36,7 +50,7 @@ function ProductsPage() {
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
     };
-  }, []);
+  }, [isAuthenticated, user]);
   
   // Fetch products from database
   const fetchProducts = async () => {

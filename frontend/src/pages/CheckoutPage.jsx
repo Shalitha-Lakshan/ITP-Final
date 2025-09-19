@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, CreditCard, MapPin, User, Phone, Mail, CheckCircle } from 'lucide-react';
 
 function CheckoutPage() {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [orderProcessing, setOrderProcessing] = useState(false);
@@ -38,12 +40,22 @@ function CheckoutPage() {
 
   // Load cart items
   useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
     fetchCartItems();
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   const fetchCartItems = async () => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+
     try {
-      const response = await axios.get('http://localhost:5000/api/cart?userId=guest');
+      const userId = user.id || user._id;
+      const response = await axios.get(`http://localhost:5000/api/cart?userId=${userId}`);
       const items = response.data.cartItems || [];
       
       if (items.length === 0) {
@@ -123,7 +135,8 @@ function CheckoutPage() {
       setOrderId(newOrderId);
       
       // Clear cart after successful order
-      await axios.delete('http://localhost:5000/api/cart/clear/all?userId=guest');
+      const userId = user.id || user._id;
+      await axios.delete(`http://localhost:5000/api/cart/clear/${userId}`);
       window.dispatchEvent(new Event('cartUpdated'));
       
       setOrderComplete(true);

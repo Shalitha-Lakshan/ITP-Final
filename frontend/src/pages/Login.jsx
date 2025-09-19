@@ -138,7 +138,7 @@ function Login() {
         
         setTimeout(() => {
           const from = location.state?.from?.pathname;
-          navigate(from || '/dashboard', { replace: true });
+          navigate(from || '/', { replace: true });
         }, 800);
       } else {
         setMessage({ type: "error", text: result.message || "Invalid credentials. Try role-based login or check your details." });

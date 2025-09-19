@@ -11,8 +11,8 @@ import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
-// Helpers to format data
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// helpers
+const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -40,65 +40,48 @@ export default function TransportDashboard() {
           axios.get(`${API_BASE}/api/transport/vehicles`),
           axios.get(`${API_BASE}/api/transport/drivers`),
           axios.get(`${API_BASE}/api/transport/analytics`),
-          axios.get(`${API_BASE}/api/transport/dashboard`),
+          axios.get(`${API_BASE}/api/transport/dashboard`)
         ]);
 
         if (!isMounted) return;
 
-        const collectionsData = collectionsRes.data || [];
-        setCollections(collectionsData);
+        const list = collectionsRes.data || [];
+        setCollections(list);
         setRoutes(routesRes.data || []);
         setVehicles(vehiclesRes.data || []);
         setDrivers(driversRes.data || []);
         setDashboard(dashboardRes.data || null);
 
-        // Build monthly collection chart data
-        const monthly = (analyticsRes.data?.monthlyTrends || []).map((m) => {
+        // monthly trends -> chart
+        const monthly = (analyticsRes.data?.monthlyTrends || []).map(m => {
           const monthIndex = (m._id?.month || 1) - 1;
           const collected = m.collected || 0;
           const scheduled = m.scheduled || 0;
           const efficiency = scheduled > 0 ? (collected / scheduled) * 100 : 0;
-          return {
-            month: monthNames[monthIndex],
-            collected,
-            scheduled,
-            efficiency: Number(efficiency.toFixed(1)),
-          };
+          return { month: monthNames[monthIndex], collected, scheduled, efficiency: Number(efficiency.toFixed(1)) };
         });
         setCollectionData(monthly);
 
-        // Build route status distribution from collections list
-        const statusCounts = {
-          Completed: 0,
-          "In Progress": 0,
-          Scheduled: 0,
-          Delayed: 0,
-        };
-        for (const c of collectionsData) {
-          const s = c.status || "Scheduled";
+        // status distribution pie
+        const statusCounts = { Completed: 0, "In Progress": 0, Scheduled: 0, Delayed: 0 };
+        for (const c of list) {
+          const s = c.status || 'Scheduled';
           if (statusCounts[s] !== undefined) statusCounts[s] += 1;
         }
-        const total = Object.values(statusCounts).reduce((a, b) => a + b, 0) || 1;
-        const routeStatus = Object.entries(statusCounts).map(([name, count]) => ({
-          name,
-          count,
-          value: Math.round((count / total) * 100),
-        }));
-        setRouteStatusData(routeStatus);
+        const total = Object.values(statusCounts).reduce((a,b)=>a+b,0) || 1;
+        const routePie = Object.entries(statusCounts).map(([name,count]) => ({ name, count, value: Math.round((count/total)*100) }));
+        setRouteStatusData(routePie);
 
         setError("");
-      } catch (err) {
-        console.error("Failed to load transport data", err);
-        setError("Failed to load transport data. Please try again.");
+      } catch (e) {
+        console.error("Transport data load failed", e);
+        setError("Failed to load transport data.");
       } finally {
         if (isMounted) setLoading(false);
       }
     };
-
     fetchAll();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   const menuItems = [
@@ -142,7 +125,7 @@ export default function TransportDashboard() {
             <div>
               <p className="text-gray-500">Bottles Collected Today</p>
               <h2 className="text-xl font-bold">{dashboard?.todayBottles ?? 0}</h2>
-              <p className="text-sm text-green-600">{dashboard ? `${Math.round((dashboard.routeEfficiency || 0))}% avg progress` : ""}</p>
+              <p className="text-sm text-green-600">{dashboard ? `${Math.round(dashboard.routeEfficiency || 0)}% avg progress` : ''}</p>
             </div>
           </CardContent>
         </Card>
@@ -151,7 +134,7 @@ export default function TransportDashboard() {
             <Truck className="text-blue-600" size={32} />
             <div>
               <p className="text-gray-500">Active Vehicles</p>
-              <h2 className="text-xl font-bold">{dashboard ? `${dashboard.activeVehicles}/${dashboard.totalVehicles}` : "0/0"}</h2>
+              <h2 className="text-xl font-bold">{dashboard ? `${dashboard.activeVehicles}/${dashboard.totalVehicles}` : '0/0'}</h2>
               <p className="text-sm text-blue-600">Fleet status</p>
             </div>
           </CardContent>
@@ -161,8 +144,8 @@ export default function TransportDashboard() {
             <MapPin className="text-purple-600" size={32} />
             <div>
               <p className="text-gray-500">Routes Completed</p>
-              <h2 className="text-xl font-bold">{routeStatusData.find(r => r.name === 'Completed')?.count || 0}/{collections.length}</h2>
-              <p className="text-sm text-purple-600">{dashboard ? `${Math.round(dashboard.routeEfficiency || 0)}% avg efficiency` : ""}</p>
+              <h2 className="text-xl font-bold">{routeStatusData.find(r=>r.name==='Completed')?.count || 0}/{collections.length}</h2>
+              <p className="text-sm text-purple-600">{dashboard ? `${Math.round(dashboard.routeEfficiency || 0)}% avg efficiency` : ''}</p>
             </div>
           </CardContent>
         </Card>
@@ -258,7 +241,7 @@ export default function TransportDashboard() {
               <tr key={collection._id} className="border-b hover:bg-gray-50">
                 <td className="p-3 font-medium">{collection.collectionId || collection._id?.slice(-6)}</td>
                 <td className="p-3">{collection.location}</td>
-                <td className="p-3">{driverName || '—'}</td>
+                <td className="p-3">{driverName}</td>
                 <td className="p-3">{vehicleId}</td>
                 <td className="p-3 font-bold">{collected}</td>
                 <td className="p-3">
@@ -277,10 +260,7 @@ export default function TransportDashboard() {
                 </td>
                 <td className="p-3">
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: `${computedProgress}%` }}
-                    ></div>
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${computedProgress}%` }}></div>
                   </div>
                   <span className="text-xs text-gray-500">{computedProgress}%</span>
                 </td>
@@ -328,9 +308,7 @@ export default function TransportDashboard() {
                 <td className="p-3">{route.estimatedDuration || '—'}</td>
                 <td className="p-3">{route.frequency || '—'}</td>
                 <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor('Active')}`}>
-                    Active
-                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor('Active')}`}>Active</span>
                 </td>
                 <td className="p-3">
                   <div className="flex space-x-2">
