@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import LogoutButton from "../common/LogoutButton";
-import { ClipboardDocumentListIcon, CubeIcon, ChartBarIcon, ArrowTrendingUpIcon, DocumentChartBarIcon } from "@heroicons/react/24/outline";
+import { ClipboardDocumentListIcon, CubeIcon, ChartBarIcon, ArrowTrendingUpIcon, DocumentChartBarIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 
 export default function InventoryDeliveryRecords() {
   const [rows, setRows] = useState([]); // transport requests
@@ -12,6 +12,14 @@ export default function InventoryDeliveryRecords() {
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [deliveredDate, setDeliveredDate] = useState(""); // yyyy-mm-dd
+  const todayYMD = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
 
   const fetchDrivers = async () => {
     try {
@@ -81,12 +89,10 @@ export default function InventoryDeliveryRecords() {
     const handler = () => { fetchRequests(); };
     window.addEventListener('transport:assigned-updated', handler);
     window.addEventListener('transport:status-updated', handler);
-    // Poll every 10s as a fallback when navigating directly
-    const t = setInterval(fetchRequests, 10000);
+    // Polling disabled; rely on manual Refresh button and events
     return () => {
       window.removeEventListener('transport:assigned-updated', handler);
       window.removeEventListener('transport:status-updated', handler);
-      clearInterval(t);
     };
   }, []);
 
@@ -128,22 +134,29 @@ export default function InventoryDeliveryRecords() {
 
   // Derived: filtered rows based on search
   const filteredRows = rows.filter((r) => {
+    // Driver name prefix match
     const needle = searchTerm.trim().toLowerCase();
-    if (!needle) return true;
-    const clerkName = String(r.collectorName || "").toLowerCase();
     const drvName = String(driverName(r.assignedDriverId) || "").toLowerCase();
-    const bottleType = String(r.bottleType || "").toLowerCase();
-    const statusRaw = String(r.status || "").toLowerCase();
-    const statusLabel = r.status === 'Delivered' ? 'received' : 'pending';
-    const actionLabel = r.status === 'Delivered' ? 'delivered (disabled)' : 'delivered';
-    return (
-      clerkName.includes(needle) ||
-      drvName.includes(needle) ||
-      bottleType.includes(needle) ||
-      statusRaw.includes(needle) ||
-      statusLabel.includes(needle) ||
-      actionLabel.includes(needle)
-    );
+    if (needle && !drvName.startsWith(needle)) return false;
+
+    // Delivered date filter
+    if (deliveredDate) {
+      // Only include rows that are delivered and match the selected date
+      const ts = r.updatedAt || r.deliveredAt;
+      if (!ts || r.status !== 'Delivered') return false;
+      try {
+        const d = new Date(ts);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const localYMD = `${y}-${m}-${dd}`;
+        if (localYMD !== deliveredDate) return false;
+      } catch {
+        return false;
+      }
+    }
+
+    return true;
   });
 
   return (
@@ -203,7 +216,7 @@ export default function InventoryDeliveryRecords() {
             to="/inventory/materials"
             className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
           >
-            <ArrowTrendingUpIcon className="w-5 h-5" />
+            <Squares2X2Icon className="w-5 h-5" />
             <span className="font-medium">Raw Materials</span>
           </Link>
           <Link
@@ -233,14 +246,61 @@ export default function InventoryDeliveryRecords() {
           {error && <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200">{error}</div>}
 
           {/* Search Bar */}
-          <div className="mb-4">
+          <div className="mb-4 flex flex-col md:flex-row md:items-center gap-3">
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by Clerk's Name, Driver Name, Bottle Type, Status, or Action"
-              className="w-full max-w-xl px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!/^[A-Za-z\s]*$/.test(v)) return; // letters and spaces only
+                setSearchTerm(v);
+              }}
+              onKeyDown={(e) => {
+                const allowedControl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+                const isLetter = /^[A-Za-z]$/.test(e.key);
+                const isSpace = e.key === ' ';
+                if (!isLetter && !isSpace && !allowedControl.includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+                const cleaned = text.replace(/[^A-Za-z\s]/g, '');
+                const next = (searchTerm || '') + cleaned;
+                if (/^[A-Za-z\s]*$/.test(next)) {
+                  setSearchTerm(next);
+                }
+              }}
+              pattern="[A-Za-z\s]*"
+              title="Only letters and spaces are allowed"
+              placeholder="Search by Driver Name"
+              className="w-full md:w-80 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={deliveredDate}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  // prevent selecting future dates
+                  if (v && v > todayYMD) return;
+                  setDeliveredDate(v);
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                title="Filter by Delivered Date"
+                max={todayYMD}
+              />
+              {deliveredDate && (
+                <button
+                  type="button"
+                  onClick={() => setDeliveredDate("")}
+                  className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 overflow-x-auto">

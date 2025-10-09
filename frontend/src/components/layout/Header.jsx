@@ -33,12 +33,11 @@ function Header() {
               onClick={() => navigate('/')}
               className="flex items-center space-x-2 group"
             >
-              <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <Package className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                EcoCycle
-              </span>
+              <img 
+                src="/ecocycle-logo.png" 
+                alt="EcoCycle Logo" 
+                className="h-24 w-auto object-contain"
+              />
             </button>
           </div>
 

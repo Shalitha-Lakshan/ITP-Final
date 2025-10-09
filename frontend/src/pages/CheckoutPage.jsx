@@ -79,14 +79,145 @@ function CheckoutPage() {
   const total = subtotal;
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-  // Handle form input changes
+  // Handle form input changes with validation
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let processedValue = value;
+    
+    // Apply input restrictions based on field type
+    switch (name) {
+      case 'firstName':
+      case 'lastName':
+      case 'cardName':
+        // Only allow letters, spaces, and dots
+        processedValue = value.replace(/[^A-Za-z\s.]/g, '');
+        // Limit to 100 characters
+        if (processedValue.length > 100) {
+          processedValue = processedValue.substring(0, 100);
+        }
+        break;
+        
+      case 'email':
+        // No special restrictions, but limit length
+        if (value.length > 100) {
+          processedValue = value.substring(0, 100);
+        }
+        break;
+        
+      case 'phone':
+        // Only allow digits and format as user types
+        let phoneDigits = value.replace(/\D/g, '');
+        // Limit to 10 digits (Sri Lankan phone numbers)
+        if (phoneDigits.length > 10) {
+          phoneDigits = phoneDigits.substring(0, 10);
+        }
+        // Format as 071-234-5678
+        if (phoneDigits.length > 6) {
+          processedValue = `${phoneDigits.substring(0, 3)}-${phoneDigits.substring(3, 6)}-${phoneDigits.substring(6)}`;
+        } else if (phoneDigits.length > 3) {
+          processedValue = `${phoneDigits.substring(0, 3)}-${phoneDigits.substring(3)}`;
+        } else {
+          processedValue = phoneDigits;
+        }
+        break;
+        
+      case 'cardNumber':
+        // Only allow digits and spaces, format as user types
+        const cardDigits = value.replace(/\D/g, '');
+        // Limit to 19 digits (16 + 3 spaces)
+        if (cardDigits.length > 16) {
+          processedValue = cardDigits.substring(0, 16).replace(/(\d{4})(?=\d)/g, '$1 ');
+        } else {
+          processedValue = cardDigits.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+        break;
+        
+      case 'expiryDate':
+        // Only allow digits and slash
+        let digits = value.replace(/[^0-9/]/g, '');
+        
+        // Limit to 5 characters (MM/YY)
+        if (digits.length > 5) {
+          digits = digits.substring(0, 5);
+        }
+        
+        // Handle month input (first two digits)
+        if (digits.length <= 2) {
+          // If first digit is 0, second digit can't be 0 (01-09)
+          if (digits.length === 2 && digits.startsWith('0')) {
+            if (digits[1] === '0') {
+              // If user tries to type 00, prevent the second 0
+              digits = '0';
+            }
+          }
+          // If first digit is 1, second digit can only be 0, 1, or 2 (10, 11, 12)
+          else if (digits.length === 2 && digits[0] === '1') {
+            const secondDigit = digits[1];
+            if (secondDigit !== '0' && secondDigit !== '1' && secondDigit !== '2') {
+              // If user tries to type 13, 14, etc., prevent the second digit
+              digits = '1';
+            }
+          }
+          // If first digit is 2-9, check if the month would be > 12
+          else if (digits.length === 2) {
+            const month = parseInt(digits, 10);
+            if (month > 12) {
+              // If month would be > 12, prevent the second digit
+              digits = digits[0];
+            }
+          }
+        }
+        
+        // Auto-insert slash after 2 digits if not already present
+        if (digits.length > 2 && !digits.includes('/')) {
+          const month = digits.substring(0, 2);
+          // Validate month (01-12)
+          const monthNum = parseInt(month, 10);
+          if (monthNum > 12) {
+            digits = '12' + digits.substring(2);
+          } else if (monthNum === 0) {
+            digits = '01' + digits.substring(1);
+          }
+          // Insert slash after month
+          digits = digits.substring(0, 2) + '/' + digits.substring(2);
+        }
+        
+        // Handle year input (after slash)
+        if (digits.includes('/') && digits.length > 3) {
+          const [month, year] = digits.split('/');
+          // If year starts with 0 and next digit is being entered, ensure it's not 0
+          if (year.length === 1 && year === '0') {
+            digits = month + '/0';
+          }
+          // Prevent 00 as year
+          else if (year === '00') {
+            digits = month + '/0';
+          }
+        }
+        
+        processedValue = digits;
+        break;
+        
+      case 'cvv':
+        // Only allow digits, limit to 3
+        processedValue = value.replace(/\D/g, '').substring(0, 3);
+        break;
+        
+      default:
+        processedValue = value;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: processedValue
+    }));
     
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
 
     // Clear payment proof error when switching method
@@ -112,35 +243,139 @@ function CheckoutPage() {
     }
   };
 
+  // Validation patterns
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  const sriLankanPhoneRegex = /^0[1-9][0-9]{8}$/; // Matches 10 digits starting with 0
+  const nameRegex = /^[A-Za-z\s.]{2,100}$/; // Only letters, spaces, and dots, 2-100 chars
+  const cardNumberRegex = /^[0-9\s]{13,23}$/; // 13-19 digits with optional spaces
+  const expiryDateRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/; // MM/YY format
+  const isExpiryDateValid = (date) => {
+    if (!expiryDateRegex.test(date)) return false;
+    
+    const [_, month, year] = date.match(expiryDateRegex);
+    const monthNum = parseInt(month, 10);
+    const yearNum = 2000 + parseInt(year, 10);
+    
+    // Check for invalid month (00 or > 12)
+    if (monthNum === 0 || monthNum > 12) return false;
+    
+    // Check for invalid year (00)
+    if (yearNum === 2000) return false;
+    
+    // Check if date is in the past
+    const expiryDate = new Date(yearNum, monthNum, 0); // Last day of expiry month
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return expiryDate >= today;
+  };
+  const cvvRegex = /^[0-9]{3}$/; // Exactly 3 digits
+  const cardNameRegex = /^[A-Za-z\s.]{3,100}$/; // Cardholder name validation
+
   // Validate form
   const validateForm = () => {
     const newErrors = {};
+    let isValid = true;
 
-    // Personal Information
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    // Personal Information Validation
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+      isValid = false;
+    } else if (!nameRegex.test(formData.firstName.trim())) {
+      newErrors.firstName = 'Name must contain only letters, spaces, and dots (2-100 characters)';
+      isValid = false;
+    }
 
-    // Shipping Address removed
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+      isValid = false;
+    } else if (!nameRegex.test(formData.lastName.trim())) {
+      newErrors.lastName = 'Name must contain only letters, spaces, and dots (2-100 characters)';
+      isValid = false;
+    }
 
-    // Payment Information
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    const phoneDigits = formData.phone.replace(/\D/g, '');
+    if (!phoneDigits) {
+      newErrors.phone = 'Phone number is required';
+      isValid = false;
+    } else if (!sriLankanPhoneRegex.test(phoneDigits)) {
+      newErrors.phone = 'Please enter a valid Sri Lankan phone number (e.g., 0712345678)';
+      isValid = false;
+    }
+
+    // Payment Information Validation
     if (formData.paymentMethod === 'card') {
-      if (!formData.cardNumber.trim()) newErrors.cardNumber = 'Card number is required';
-      if (!formData.expiryDate.trim()) newErrors.expiryDate = 'Expiry date is required';
-      if (!formData.cvv.trim()) newErrors.cvv = 'CVV is required';
-      if (!formData.cardName.trim()) newErrors.cardName = 'Cardholder name is required';
+      // Card Number
+      const cardNumber = formData.cardNumber.replace(/\s+/g, '');
+      if (!cardNumber) {
+        newErrors.cardNumber = 'Card number is required';
+        isValid = false;
+      } else if (!/^[0-9]{13,19}$/.test(cardNumber)) {
+        newErrors.cardNumber = 'Please enter a valid card number (13-19 digits)';
+        isValid = false;
+      }
+
+      // Expiry date validation
+      if (!formData.expiryDate) {
+        newErrors.expiryDate = 'Expiry date is required (MM/YY)';
+        isValid = false;
+      } else if (!isExpiryDateValid(formData.expiryDate)) {
+        if (formData.expiryDate === '00/00') {
+          newErrors.expiryDate = 'Please enter a valid expiry date';
+        } else if (formData.expiryDate.endsWith('/00')) {
+          newErrors.expiryDate = 'Please enter a valid year';
+        } else if (formData.expiryDate.startsWith('00/')) {
+          newErrors.expiryDate = 'Please enter a valid month';
+        } else if (formData.expiryDate.match(/^1[3-9]|2[0-9]|3[0-9]|0[0-9]/)) {
+          newErrors.expiryDate = 'Please enter a valid month (01-12)';
+        } else {
+          newErrors.expiryDate = 'This card has expired';
+        }
+        isValid = false;
+      }
+
+      // CVV
+      if (!formData.cvv) {
+        newErrors.cvv = 'CVV is required';
+        isValid = false;
+      } else if (!cvvRegex.test(formData.cvv)) {
+        newErrors.cvv = 'Please enter a valid 3-digit CVV';
+        isValid = false;
+      }
+
+      // Cardholder Name
+      if (!formData.cardName.trim()) {
+        newErrors.cardName = 'Cardholder name is required';
+        isValid = false;
+      } else if (!cardNameRegex.test(formData.cardName.trim())) {
+        newErrors.cardName = 'Please enter a valid cardholder name';
+        isValid = false;
+      }
     } else {
-      // Bank transfer or mobile payments require proof upload
+      // Payment proof validation for non-card payments
       if (!paymentProof) {
-        setPaymentProofError('Please upload payment proof (image or PDF).');
+        setPaymentProofError('Please upload payment proof (image or PDF)');
         newErrors.paymentProof = 'Payment proof required';
+        isValid = false;
+      } else if (paymentProof.size > 5 * 1024 * 1024) { // 5MB limit
+        setPaymentProofError('File size should be less than 5MB');
+        newErrors.paymentProof = 'File too large';
+        isValid = false;
+      } else {
+        setPaymentProofError('');
       }
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isValid;
   };
 
   // Handle order submission

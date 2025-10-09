@@ -10,6 +10,7 @@ import {
   ClipboardDocumentListIcon,
   CheckIcon,
   XMarkIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 
 const InventoryRequests = () => {
@@ -17,7 +18,6 @@ const InventoryRequests = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [filterStatus, setFilterStatus] = useState("All"); // All | Pending | Approved | Rejected
-  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchProductionRequests = async () => {
     try {
@@ -65,16 +65,7 @@ const InventoryRequests = () => {
   };
 
   const filteredRequests = requests
-    .filter(r => filterStatus === 'All' ? true : (r.status || '').toLowerCase() === filterStatus.toLowerCase())
-    .filter(r => {
-      if (!searchTerm.trim()) return true;
-      const needle = searchTerm.toLowerCase();
-      return (
-        (r.team || '').toLowerCase().includes(needle) ||
-        (r.priority || '').toLowerCase().includes(needle) ||
-        (r.inventoryItemId?.name || '').toLowerCase().includes(needle)
-      );
-    });
+    .filter(r => filterStatus === 'All' ? true : (r.status || '').toLowerCase() === filterStatus.toLowerCase());
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -132,7 +123,7 @@ const InventoryRequests = () => {
             to="/inventory/materials"
             className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
           >
-            <ArrowTrendingUpIcon className="w-5 h-5" />
+            <Squares2X2Icon className="w-5 h-5" />
             <span className="font-medium">Raw Materials</span>
           </Link>
           <Link
@@ -176,7 +167,7 @@ const InventoryRequests = () => {
           )}
 
           {/* Controls */}
-          <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-6">
+          <div className="flex flex-col md:flex-row gap-3 md:items-center mb-6">
             <div className="inline-flex rounded-xl overflow-hidden border border-gray-200">
               {['All','Pending','Approved','Rejected'].map(tab => (
                 <button
@@ -191,19 +182,6 @@ const InventoryRequests = () => {
                   {tab} <span className="ml-1 text-xs opacity-80">({statusCounts[tab]})</span>
                 </button>
               ))}
-            </div>
-
-            <div className="relative w-full md:w-72">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search team, item or priority..."
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-              </svg>
             </div>
           </div>
 

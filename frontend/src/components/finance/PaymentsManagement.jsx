@@ -66,12 +66,14 @@ export default function PaymentsManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchError, setSearchError] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [filters, setFilters] = useState({
     status: 'all',
     paymentStatus: 'all',
   });
+  const [searchHistory, setSearchHistory] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -224,19 +226,73 @@ export default function PaymentsManagement() {
     return handleUpdateStatus(orderId, 'failed');
   };
 
+  // Handle search input with validation
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    
+    // Basic validation - allow alphanumeric, spaces, and common payment/order characters
+    const searchRegex = /^[a-zA-Z0-9\s\-\#\@\.\,]*$/;
+    
+    if (!searchRegex.test(value)) {
+      setSearchError('Please use only letters, numbers, and common symbols');
+      return;
+    }
+    
+    // Limit search term length
+    if (value.length > 50) {
+      setSearchError('Search term cannot exceed 50 characters');
+      return;
+    }
+    
+    setSearchTerm(value);
+    setSearchError('');
+    
+    // Add to search history if not empty
+    if (value.trim() !== '' && !searchHistory.includes(value.trim())) {
+      setSearchHistory(prev => [value.trim(), ...prev].slice(0, 5)); // Keep last 5 searches
+    }
+  };
+
+  // Filter orders based on search and filters with enhanced search capabilities
   const filteredOrders = React.useMemo(() => {
+    if (!Array.isArray(orders)) return [];
+    
     return orders.filter(order => {
-      if (!order) return false;
+      // If search term exists, check multiple fields with different matching strategies
+      const searchLower = searchTerm.toLowerCase().trim();
+      let matchesSearch = true;
       
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = 
-        (order.orderId?.toLowerCase().includes(searchLower) ||
-        order.customerName?.toLowerCase().includes(searchLower)) ||
-        false;
+      if (searchLower) {
+        // Try to match order ID exactly at the start (case-insensitive)
+        const orderIdMatch = order.orderId && 
+          order.orderId.toLowerCase().startsWith(searchLower);
         
-      const matchesStatus = filters.status === 'all' || order.status === filters.status;
+        // Try to match any word in customer name that starts with the search term
+        const customerNameMatch = order.customerName && 
+          order.customerName.toLowerCase().split(/\s+/).some(word => 
+            word.startsWith(searchLower)
+          );
+        
+        // Try to match amount (if search term is a number)
+        const amountMatch = !isNaN(parseFloat(searchLower)) && 
+          order.totalAmount && 
+          parseFloat(order.totalAmount).toFixed(2).includes(searchLower);
+        
+        // Try to match date (various formats)
+        const dateMatch = order.orderDate && 
+          (new Date(order.orderDate).toLocaleDateString().includes(searchLower) ||
+           new Date(order.orderDate).toISOString().split('T')[0].includes(searchLower));
+        
+        matchesSearch = orderIdMatch || customerNameMatch || amountMatch || dateMatch;
+      }
+      
+      // Filter by status
+      const matchesStatus = filters.status === 'all' || 
+        (order.status && order.status.toLowerCase() === filters.status.toLowerCase());
+      
+      // Filter by payment status
       const matchesPaymentStatus = filters.paymentStatus === 'all' || 
-        (order.paymentStatus ? order.paymentStatus === filters.paymentStatus : false);
+        (order.paymentStatus && order.paymentStatus.toLowerCase() === filters.paymentStatus.toLowerCase());
       
       return matchesSearch && matchesStatus && matchesPaymentStatus;
     });

@@ -1,6 +1,8 @@
 // src/components/collectors/CollectorsDashboard.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Link } from "react-router-dom";
 import LogoutButton from "../common/LogoutButton";
 import {
@@ -35,6 +37,66 @@ import {
 // Helpers
 const nowIso = () => new Date().toISOString();
 
+// Preload logo from public folder for PDF header
+const loadHeaderLogo = () => new Promise((resolve) => {
+  try {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.src = window.location.origin + '/ecocycle-logo.png';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+  } catch { resolve(null); }
+});
+
+// Standard PDF header for all reports (auto fits portrait/landscape)
+// Optionally provide logoImg (HTMLImageElement) to render on the left
+const addStandardPdfHeader = (doc, title, subtitle = '', logoImg = null) => {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const centerX = pageWidth / 2;
+
+  // Header bar full width (brand teal #0c9387)
+  doc.setFillColor(12, 147, 135);
+  doc.rect(0, 0, pageWidth, 30, 'F');
+
+  // Logo at left if available
+  if (logoImg) {
+    try {
+      const logoW = 32; // mm (increased slightly)
+      const logoH = (logoImg.height * logoW) / logoImg.width;
+      const x = 18; // move a bit towards the text
+      const y = 15 - (logoH / 2);
+      doc.addImage(logoImg, 'PNG', x, y, logoW, logoH);
+    } catch {}
+  }
+
+  // Company text
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ECOCYCLE LANKA (PVT) LTD', centerX, 15, { align: 'center' });
+  doc.setFontSize(10);
+  doc.text('123 Green Tech Park, Colombo 05, Sri Lanka', centerX, 20, { align: 'center' });
+  doc.text('Tel: +94 11 234 5678 | Email: ecocycle923@gmail.com', centerX, 25, { align: 'center' });
+  
+  // Report title and date
+  doc.setTextColor(12, 147, 135); // #0c9387
+  doc.setFontSize(14);
+  doc.setFont(undefined, 'bold');
+  doc.text(title, centerX, 45, { align: 'center' });
+  // reset to black for the rest of the header text
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 52);
+  if (subtitle) {
+    // Allow multi-line subtitle
+    const lines = Array.isArray(subtitle) ? subtitle : doc.splitTextToSize(String(subtitle), pageWidth - 40);
+    doc.text(lines, 20, 59);
+  }
+  
+  return subtitle ? 70 : 60; // Return Y position after header
+};
+
 export default function CollectorsDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
@@ -61,6 +123,8 @@ export default function CollectorsDashboard() {
   const [filterMaxG, setFilterMaxG] = useState("");
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
+  // Search term for Recent Collections
+  const [searchTerm, setSearchTerm] = useState("");
   // Applied filters (take effect only after clicking Apply)
   const [appliedMinG, setAppliedMinG] = useState("");
   const [appliedMaxG, setAppliedMaxG] = useState("");
@@ -68,6 +132,10 @@ export default function CollectorsDashboard() {
   const [appliedTo, setAppliedTo] = useState("");
   // Today string for date inputs (YYYY-MM-DD)
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  // Transport Requests search term (for suggestions only)
+  const [reqSearchTerm, setReqSearchTerm] = useState("");
+  // Collector Locations search term (for suggestions only)
+  const [locSearchTerm, setLocSearchTerm] = useState("");
 
   // Shared Active Bin Locations (from Transport -> Bin Locations)
   const [binLocations, setBinLocations] = useState([]);
@@ -103,50 +171,68 @@ export default function CollectorsDashboard() {
     }
   }, [filterFrom, filterTo]);
 
-  // Export 'Daily Collection in Current Month' to PDF (printable window)
-  const exportDailyCurrentMonthToPdf = () => {
+  // Export 'Daily Collection in Current Month' to PDF
+  const exportDailyCurrentMonthToPdf = async () => {
     try {
-      const rows = chartDailyCurrentMonth || [];
+      console.log('[PDF] exportDailyCurrentMonthToPdf clicked');
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      const logo = await loadHeaderLogo();
+      
       const title = `Daily Collection in ${new Date().toLocaleString(undefined, { month: 'long', year: 'numeric' })}`;
-      const rowsHtml = rows.map(r => (
-        `<tr>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${r.day}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${Number(r.qty).toFixed(3)}</td>
-        </tr>`
-      )).join('');
-      const html = `<!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>${title}</title>
-          <style>
-            body { font-family: Arial, Helvetica, sans-serif; color: #111827; }
-            h1 { font-size: 20px; margin: 0 0 8px 0; }
-            table { border-collapse: collapse; width: 100%; font-size: 12px; }
-            thead th { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-            @media print { @page { size: A4; margin: 12mm; } }
-          </style>
-        </head>
-        <body>
-          <h1>${title}</h1>
-          <table>
-            <thead>
-              <tr>
-                <th>Day</th>
-                <th>Total Weight (kg)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml || '<tr><td colspan="2" style="padding:12px;text-align:center;color:#6b7280;">No data</td></tr>'}
-            </tbody>
-          </table>
-          <script>window.onload = function(){ try { setTimeout(function(){ window.print(); }, 100); } catch(e){} };</script>
-        </body>
-      </html>`;
-      const w = window.open('', '_blank');
-      if (!w) return;
-      w.document.write(html);
-      try { w.document.close(); } catch {}
+      const rows = chartDailyCurrentMonth || [];
+      
+      // Add standard header
+      let yPos = addStandardPdfHeader(doc, title, `Generated on ${new Date().toLocaleString()}`, logo);
+      
+      // Prepare table data
+      const tableColumn = ['Day', 'Total Weight (kg)'];
+      const tableRows = rows.map(r => [
+        r.day,
+        Number(r.qty).toFixed(3)
+      ]);
+      
+      // Compute full-width table layout
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const leftMargin = 10;
+      const rightMargin = 10;
+      const usableWidth = pageWidth - leftMargin - rightMargin;
+      const dateColWidth = usableWidth * 0.6;   // 60% for date
+      const qtyColWidth = usableWidth * 0.4;    // 40% for quantity
+
+      // Add table to PDF spanning full width
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows.length ? tableRows : [['No data available']],
+        startY: yPos,
+        styles: { 
+          fontSize: 10,
+          cellPadding: 4,
+          overflow: 'linebreak'
+        },
+        headStyles: { 
+          fillColor: [241, 245, 249],
+          textColor: [30, 41, 59],
+          fontStyle: 'bold',
+          cellPadding: 5
+        },
+        alternateRowStyles: { 
+          fillColor: [249, 250, 251],
+          cellPadding: 4
+        },
+        margin: { left: leftMargin, right: rightMargin },
+        tableWidth: usableWidth,
+        columnStyles: {
+          0: { cellWidth: dateColWidth },
+          1: { cellWidth: qtyColWidth, halign: 'right' }
+        }
+      });
+      
+      // Save the PDF
+      doc.save(`daily_collection_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (e) {
       console.error('Export daily current month PDF failed', e);
     }
@@ -207,72 +293,62 @@ export default function CollectorsDashboard() {
   };
 
   // Export the filtered table to a printable page (user can Save as PDF)
-  const exportFilteredToPdf = () => {
-    const rows = getFilteredRows();
-    const title = 'Recent Collections Report';
-    const summary = `Filters: MinG=${filterMinG||'-'} | MaxG=${filterMaxG||'-'} | From=${filterFrom||'-'} | To=${filterTo||'-'}`;
-    const htmlRows = rows.map((c, idx)=>{
-      const id = c.collectionId || (c._id?.slice(-6) || String(idx+1));
-      const userName = c.awardedToUserId?.name || '-';
-      const collectorName = c.collectorName || '-';
-      const grams = ((Number(c.quantity)||0) * 1000).toFixed(1);
-      const location = c.location || '-';
-      const points = c.awardedPoints || 0;
-      const dateStr = c.createdAt ? new Date(c.createdAt).toLocaleString() : '';
-      return `<tr>
-        <td style="padding:8px;border:1px solid #e5e7eb;">${id}</td>
-        <td style="padding:8px;border:1px solid #e5e7eb;">${userName}</td>
-        <td style="padding:8px;border:1px solid #e5e7eb;">${collectorName}</td>
-        <td style="padding:8px;border:1px solid #e5e7eb;">${grams}</td>
-        <td style="padding:8px;border:1px solid #e5e7eb;">${location}</td>
-        <td style="padding:8px;border:1px solid #e5e7eb;">${points}</td>
-        <td style="padding:8px;border:1px solid #e5e7eb;">${dateStr}</td>
-      </tr>`;
-    }).join('');
+  const exportFilteredToPdf = async () => {
+    try {
+      console.log('[PDF] exportFilteredToPdf clicked');
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const logo = await loadHeaderLogo();
+      const title = 'Recent Collections Report';
+      const rows = getFilteredRows();
+      let subtitle = `Generated on ${new Date().toLocaleString()}\n`;
+      subtitle += `Filters: MinG=${filterMinG||'-'} | MaxG=${filterMaxG||'-'} | From=${filterFrom||'-'} | To=${filterTo||'-'}`;
 
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(`<!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>${title}</title>
-        <style>
-          body { font-family: Arial, Helvetica, sans-serif; color: #111827; }
-          h1 { font-size: 20px; margin: 0 0 4px 0; }
-          .muted { color: #6b7280; font-size: 12px; margin-bottom: 12px; }
-          table { border-collapse: collapse; width: 100%; font-size: 12px; }
-          thead th { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-          @media print {
-            @page { size: A4; margin: 12mm; }
-          }
-        </style>
-      </head>
-      <body>
-        <h1>${title}</h1>
-        <div class="muted">${summary}</div>
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>User Name</th>
-              <th>Collector Name</th>
-              <th>Weight (g)</th>
-              <th>Location</th>
-              <th>Awarded Points</th>
-              <th>Collected Stamp (Time & Date)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${htmlRows || '<tr><td colspan="7" style="padding:12px;text-align:center;color:#6b7280;">No data</td></tr>'}
-          </tbody>
-        </table>
-        <script>
-          window.onload = function(){ try { window.print(); } catch(e){} };
-        </script>
-      </body>
-    </html>`);
-    try { w.document.close(); } catch {}
+      // Header
+      const startY = addStandardPdfHeader(doc, title, subtitle, logo);
+
+      // Table
+      const head = [['ID','User Name','Collector Name','Weight (g)','Location','Awarded Points','Collected Stamp (Time & Date)']];
+      const body = rows.map((c, idx) => [
+        c.collectionId || (c._id?.slice(-6) || String(idx+1)),
+        c.awardedToUserId?.name || '-',
+        c.collectorName || '-',
+        (((Number(c.quantity)||0) * 1000).toFixed(1)),
+        c.location || '-',
+        String(c.awardedPoints || 0),
+        c.createdAt ? new Date(c.createdAt).toLocaleString() : ''
+      ]);
+
+      // Full-width layout for landscape
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const leftMargin = 10;
+      const rightMargin = 10;
+      const usableWidth = pageWidth - leftMargin - rightMargin;
+      // Proportional widths across 7 columns
+      const widths = [0.1, 0.16, 0.16, 0.1, 0.18, 0.1, 0.2].map(p => +(usableWidth * p).toFixed(2));
+
+      autoTable(doc, {
+        head,
+        body: body.length ? body : [['No data']],
+        startY,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [241,245,249], textColor: [30,41,59], fontStyle: 'bold' },
+        margin: { left: leftMargin, right: rightMargin },
+        tableWidth: usableWidth,
+        columnStyles: {
+          0: { cellWidth: widths[0] },               // ID
+          1: { cellWidth: widths[1] },               // User Name
+          2: { cellWidth: widths[2] },               // Collector Name
+          3: { cellWidth: widths[3], halign: 'right' }, // Weight (g)
+          4: { cellWidth: widths[4] },               // Location
+          5: { cellWidth: widths[5], halign: 'right' }, // Points
+          6: { cellWidth: widths[6] }                // Timestamp
+        }
+      });
+
+      doc.save(`collections_filtered_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (e) {
+      console.error('Export filtered PDF failed', e);
+    }
   };
 
   const fetchTransportRequests = async () => {
@@ -304,64 +380,33 @@ export default function CollectorsDashboard() {
   }, [collections]);
 
   // Export Collector Locations (active bins) to PDF
-  const exportLocationsToPdf = () => {
+  const exportLocationsToPdf = async () => {
     try {
+      console.log('[PDF] exportLocationsToPdf clicked');
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const logo = await loadHeaderLogo();
+      const title = 'Collector Locations (Active)';
+      const startY = addStandardPdfHeader(doc, title, `Exported: ${new Date().toLocaleString()}`, logo);
+
       const rows = (binLocations || []).map((loc, idx) => {
         const id = loc.routeId || loc.id || `LOC-${idx+1}`;
         const name = loc.location || loc.name || '-';
         const city = loc.city || '';
         const manager = loc.managerName || loc.manager || '';
         const distance = typeof loc.distanceKm === 'number' ? `${loc.distanceKm} km` : (loc.distance?.total ? `${loc.distance.total} ${loc.distance.unit||'km'}` : '');
-        return { id, name, city, manager, distance };
+        return [id, name, city, manager, distance];
       });
-      const title = 'Collector Locations (Active)';
-      const rowsHtml = rows.map(r => (
-        `<tr>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${r.id}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${r.name}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${r.city}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${r.manager}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${r.distance}</td>
-        </tr>`
-      )).join('');
-      const html = `<!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>${title}</title>
-          <style>
-            body { font-family: Arial, Helvetica, sans-serif; color: #111827; }
-            h1 { font-size: 20px; margin: 0 0 8px 0; }
-            .muted { color: #6b7280; font-size: 12px; margin-bottom: 12px; }
-            table { border-collapse: collapse; width: 100%; font-size: 12px; }
-            thead th { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-            @media print { @page { size: A4; margin: 12mm; } }
-          </style>
-        </head>
-        <body>
-          <h1>${title}</h1>
-          <div class="muted">Exported: ${new Date().toLocaleString()}</div>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Location</th>
-                <th>City</th>
-                <th>Manager</th>
-                <th>Distance</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml || '<tr><td colspan="5" style="padding:12px;text-align:center;color:#6b7280;">No locations</td></tr>'}
-            </tbody>
-          </table>
-          <script>window.onload = function(){ try { setTimeout(function(){ window.print(); }, 100); } catch(e){} };</script>
-        </body>
-      </html>`;
-      const w = window.open('', '_blank');
-      if (!w) return;
-      w.document.write(html);
-      try { w.document.close(); } catch {}
+
+      autoTable(doc, {
+        head: [['ID','Location','City','Manager','Distance']],
+        body: rows.length ? rows : [['No locations']],
+        startY,
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [241,245,249], textColor: [30,41,59], fontStyle: 'bold' },
+        columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 50 }, 2: { cellWidth: 30 }, 3: { cellWidth: 40 }, 4: { cellWidth: 'auto' } }
+      });
+
+      doc.save(`collector_locations_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (e) {
       console.error('Export locations PDF failed', e);
     }
@@ -481,49 +526,26 @@ export default function CollectorsDashboard() {
   }, [collections]);
 
   // Export 'Collections by Location' to PDF (printable window)
-  const exportCollectionsByLocationToPdf = () => {
+  const exportCollectionsByLocationToPdf = async () => {
     try {
-      const rows = chartByLocation || [];
+      console.log('[PDF] exportCollectionsByLocationToPdf clicked');
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const logo = await loadHeaderLogo();
       const title = 'Collections by Location';
-      const rowsHtml = rows.map(r => (
-        `<tr>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${r.location}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${Number(r.qty).toFixed(3)}</td>
-        </tr>`
-      )).join('');
-      const html = `<!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>${title}</title>
-          <style>
-            body { font-family: Arial, Helvetica, sans-serif; color: #111827; }
-            h1 { font-size: 20px; margin: 0 0 8px 0; }
-            table { border-collapse: collapse; width: 100%; font-size: 12px; }
-            thead th { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-            @media print { @page { size: A4; margin: 12mm; } }
-          </style>
-        </head>
-        <body>
-          <h1>${title}</h1>
-          <table>
-            <thead>
-              <tr>
-                <th>Location</th>
-                <th>Total Weight (kg)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml || '<tr><td colspan="2" style="padding:12px;text-align:center;color:#6b7280;">No data</td></tr>'}
-            </tbody>
-          </table>
-          <script>window.onload = function(){ try { setTimeout(function(){ window.print(); }, 100); } catch(e){} };</script>
-        </body>
-      </html>`;
-      const w = window.open('', '_blank');
-      if (!w) return;
-      w.document.write(html);
-      try { w.document.close(); } catch {}
+      const rows = chartByLocation || [];
+      const startY = addStandardPdfHeader(doc, title, `Generated on ${new Date().toLocaleString()}`, logo);
+
+      const body = rows.map(r => [r.location, Number(r.qty).toFixed(3)]);
+      autoTable(doc, {
+        head: [['Location','Total Weight (kg)']],
+        body: body.length ? body : [['No data available']],
+        startY,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [241,245,249], textColor: [30,41,59], fontStyle: 'bold' },
+        columnStyles: { 0: { cellWidth: 'auto' }, 1: { cellWidth: 'auto', halign: 'right' } }
+      });
+
+      doc.save(`collections_by_location_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (e) {
       console.error('Export by location PDF failed', e);
     }
@@ -859,6 +881,72 @@ export default function CollectorsDashboard() {
             <button onClick={loadActiveBins} className="text-sm px-3 py-1.5 rounded-lg border hover:bg-gray-50">Refresh</button>
           </div>
         </div>
+        {/* Search field with suggestions (does NOT filter the cards) */}
+        <div className="mb-4">
+          <div className="flex items-end gap-2 w-full">
+            <div className="w-full relative">
+              <label className="block text-sm font-medium text-gray-700">Search Locations</label>
+              <input
+                type="text"
+                value={locSearchTerm}
+                onChange={(e)=>setLocSearchTerm(e.target.value)}
+                placeholder="Start typing (ID, Location, City, Manager)"
+                className="border rounded-lg px-3 py-2 w-full"
+              />
+              {(() => {
+                const term = (locSearchTerm || '').trim();
+                if (!term) return null;
+                const lower = term.toLowerCase();
+                const starts = (v) => String(v||'').trim().toLowerCase().startsWith(lower);
+                const items = (binLocations || [])
+                  .slice()
+                  .filter(loc => {
+                    const id = loc.routeId || loc.id || '';
+                    const name = loc.location || loc.name || '';
+                    const city = loc.city || '';
+                    const manager = loc.managerName || loc.manager || '';
+                    return starts(id) || starts(name) || starts(city) || starts(manager);
+                  })
+                  .slice(0, 8);
+                const highlight = (value) => {
+                  const str = String(value||'');
+                  if (!str.toLowerCase().startsWith(lower)) return str;
+                  return (
+                    <>
+                      <mark className="bg-yellow-200">{str.slice(0, term.length)}</mark>
+                      {str.slice(term.length)}
+                    </>
+                  );
+                };
+                return (
+                  <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow max-h-64 overflow-auto">
+                    {items.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
+                    ) : (
+                      items.map((loc, idx) => {
+                        const id = loc.routeId || loc.id || '';
+                        const name = loc.location || loc.name || '';
+                        const city = loc.city || '';
+                        const manager = loc.managerName || loc.manager || '';
+                        return (
+                          <div key={id || idx} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-default">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <span className="font-mono text-gray-800">{highlight(id)}</span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-700">{highlight(name)}</span>
+                              {city && (<><span className="text-gray-400">•</span><span className="text-gray-700">{highlight(city)}</span></>)}
+                              {manager && (<><span className="text-gray-400">•</span><span className="text-gray-700">{highlight(manager)}</span></>)}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
         {binsError && <div className="mb-3 text-sm text-red-600">{binsError}</div>}
         {binsLoading ? (
           <div className="text-gray-600">Loading active locations...</div>
@@ -901,74 +989,50 @@ export default function CollectorsDashboard() {
   };
 
   // Export current Transport Requests table to printable page (Save as PDF)
-  const exportTransportRequestsToPdf = () => {
+  const exportTransportRequestsToPdf = async () => {
     try {
-      const rowsHtml = (transportReqs || []).slice().map((r, idx) => {
-        const id = r.requestId || (r._id?.slice(-6) || String(idx+1));
-        const createdAt = r.createdAt ? new Date(r.createdAt).toLocaleString() : '-';
-        const collector = r.collectorName || '-';
-        const qty = (r.quantity != null) ? Number(r.quantity).toFixed(3) : '-';
-        const location = r.location || '-';
-        const status = r.status || '-';
-        return `<tr>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${id}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${collector}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${qty}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${location}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${status}</td>
-          <td style="padding:8px;border:1px solid #e5e7eb;">${createdAt}</td>
-        </tr>`;
-      }).join('');
-
+      console.log('[PDF] exportTransportRequestsToPdf clicked');
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const logo = await loadHeaderLogo();
       const title = 'Collector - Transport Requests';
-      const html = `<!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>${title}</title>
-          <style>
-            body { font-family: Arial, Helvetica, sans-serif; color: #111827; }
-            h1 { font-size: 20px; margin: 0 0 8px 0; }
-            table { border-collapse: collapse; width: 100%; font-size: 12px; }
-            thead th { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-            @media print { @page { size: A4; margin: 12mm; } }
-          </style>
-        </head>
-        <body>
-          <h1>${title}</h1>
-          <table>
-            <thead>
-              <tr>
-                <th>Request ID</th>
-                <th>Collector</th>
-                <th>Weight (kg)</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Created Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml || '<tr><td colspan="6" style="padding:12px;text-align:center;color:#6b7280;">No requests</td></tr>'}
-            </tbody>
-          </table>
-          <script>window.onload = function(){ try { setTimeout(function(){ window.print(); }, 100); } catch(e){} };</script>
-        </body>
-      </html>`;
+      const startY = addStandardPdfHeader(doc, title, `Generated on ${new Date().toLocaleString()}`, logo);
 
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-      const win = iframe.contentWindow;
-      const doc = win.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
-      win.onafterprint = () => { try { document.body.removeChild(iframe); } catch {} };
+      const body = (transportReqs || []).slice().map((r, idx) => [
+        r.requestId || (r._id?.slice(-6) || String(idx+1)),
+        r.collectorName || '-',
+        (r.quantity != null) ? Number(r.quantity).toFixed(3) : '-',
+        r.location || '-',
+        r.status || '-',
+        r.createdAt ? new Date(r.createdAt).toLocaleString() : '-'
+      ]);
+
+      // Full-width layout for landscape
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const leftMargin = 10;
+      const rightMargin = 10;
+      const usableWidth = pageWidth - leftMargin - rightMargin;
+      // Proportional widths across 6 columns: ID, Collector, Weight, Location, Status, Timestamp
+      const widths = [0.16, 0.18, 0.12, 0.2, 0.12, 0.22].map(p => +(usableWidth * p).toFixed(2));
+
+      autoTable(doc, {
+        head: [['Request ID','Collector','Weight (kg)','Location','Status','Created Timestamp']],
+        body: body.length ? body : [['No requests']],
+        startY,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [241,245,249], textColor: [30,41,59], fontStyle: 'bold' },
+        margin: { left: leftMargin, right: rightMargin },
+        tableWidth: usableWidth,
+        columnStyles: {
+          0: { cellWidth: widths[0] },                   // Request ID
+          1: { cellWidth: widths[1] },                   // Collector
+          2: { cellWidth: widths[2], halign: 'right' },  // Weight (kg)
+          3: { cellWidth: widths[3] },                   // Location
+          4: { cellWidth: widths[4] },                   // Status
+          5: { cellWidth: widths[5] }                    // Created Timestamp
+        }
+      });
+
+      doc.save(`transport_requests_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (e) {
       console.error('Export PDF failed', e);
     }
@@ -994,71 +1058,49 @@ export default function CollectorsDashboard() {
     }
   };
 
+  // Download a PDF receipt (no QR) with the same standard header as reports
+  const downloadReceiptPdf = async () => {
+    try {
+      if (!lastReceipt) return;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const logo = await loadHeaderLogo();
+      const title = 'Collection Receipt';
+      const subtitle = `Receipt ID: ${lastReceipt.id}  |  Generated: ${new Date().toLocaleString()}`;
+      let y = addStandardPdfHeader(doc, title, subtitle, logo);
+
+      // Key-value details
+      const leftX = 20;
+      const labelW = 45;
+      const lineH = 8;
+      const rows = [
+        ['Timestamp', new Date(lastReceipt.createdAt).toLocaleString()],
+        ['Collector', lastReceipt.collectorName],
+        ['User Phone', lastReceipt.userPhone],
+        ['Weight (g)', lastReceipt.quantity],
+        ['Location', lastReceipt.location || '-'],
+        ['Awarded Points', lastReceipt.awardedPoints],
+      ];
+      rows.forEach(([label, value], i) => {
+        const yPos = y + i * lineH;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(55, 65, 81);
+        doc.text(String(label), leftX, yPos);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(17, 24, 39);
+        doc.text(String(value ?? '-'), leftX + labelW, yPos);
+      });
+
+      const fileId = lastReceipt.id || 'collection_receipt';
+      doc.save(`receipt_${fileId}.pdf`);
+    } catch (e) {
+      console.error('Failed to download receipt PDF', e);
+    }
+  };
+
   const ReceiptModal = () => {
     if (!showReceipt || !lastReceipt) return null;
-    const qrPayload = {
-      type: 'collection_receipt',
-      id: lastReceipt.id,
-      collector: lastReceipt.collectorName,
-      phone: lastReceipt.userPhone,
-      bottleType: lastReceipt.bottleType,
-      quantity: lastReceipt.quantity,
-      location: lastReceipt.location,
-      points: lastReceipt.awardedPoints,
-      createdAt: lastReceipt.createdAt,
-    };
-    const printReceipt = () => {
-      try {
-        const title = 'Collection Receipt';
-        const html = `<!doctype html>
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>${title}</title>
-            <style>
-              @page { size: A4; margin: 12mm; }
-              body { font-family: Arial, Helvetica, sans-serif; color: #111827; }
-              h1 { font-size: 18px; margin: 0 0 8px 0; }
-              .row { display:flex; justify-content:space-between; margin: 6px 0; font-size: 12px; }
-              .label { color:#6b7280; }
-              .value { }
-              .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; }
-              img { border: 1px solid #e5e7eb; border-radius: 12px; padding: 6px; }
-            </style>
-          </head>
-          <body>
-            <div class="card">
-              <h1>${title}</h1>
-              <div class="row"><span class="label">Receipt ID</span><span class="value">${lastReceipt.id}</span></div>
-              <div class="row"><span class="label">Timestamp</span><span class="value">${new Date(lastReceipt.createdAt).toISOString()}</span></div>
-              <div class="row"><span class="label">Collector</span><span class="value">${lastReceipt.collectorName}</span></div>
-              <div class="row"><span class="label">User Phone</span><span class="value">${lastReceipt.userPhone}</span></div>
-              <div class="row"><span class="label">Weight (g)</span><span class="value">${lastReceipt.quantity}</span></div>
-              <div class="row"><span class="label">Location</span><span class="value">${lastReceipt.location || '-'}</span></div>
-              <div class="row"><span class="label">Awarded Points</span><span class="value">${lastReceipt.awardedPoints}</span></div>
-              <div style="margin-top:12px; display:flex; justify-content:center;">
-                <img src="${buildQrUrl(qrPayload)}" onerror="this.onerror=null; this.src='${buildQrFallbackUrl(qrPayload)}'" alt="QR" />
-              </div>
-            </div>
-            <script>window.onload = function(){ try { window.print(); } catch(e){} };</script>
-          </body>
-        </html>`;
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = '0';
-        document.body.appendChild(iframe);
-        const win = iframe.contentWindow;
-        const doc = win.document;
-        doc.open();
-        doc.write(html);
-        doc.close();
-        win.onafterprint = () => { try { document.body.removeChild(iframe); } catch {} };
-      } catch {}
-    };
+    // Legacy print/QR is removed per requirement; using jsPDF download instead.
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
         {/* Print styles to ensure only the receipt prints on one page */}
@@ -1073,10 +1115,12 @@ export default function CollectorsDashboard() {
         <div className="bg-white w-[680px] max-w-[95vw] rounded-2xl shadow-xl overflow-hidden receipt-print">
           <div className="px-5 py-4 border-b flex items-center justify-between">
             <h3 className="text-lg font-semibold">Collection Receipt</h3>
-            <button onClick={()=>setShowReceipt(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+            <button onClick={()=>setShowReceipt(false)} className="text-gray-500 hover:text-gray-700" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-2">
+          <div className="p-6 grid grid-cols-1 gap-6">
+            <div className="space-y-2">
               <div className="flex justify-between text-sm"><span className="text-gray-500">Receipt ID</span><span className="font-mono">{lastReceipt.id}</span></div>
               <div className="flex justify-between text-sm"><span className="text-gray-500">Timestamp</span><span>{new Date(lastReceipt.createdAt).toISOString()}</span></div>
               <div className="flex justify-between text-sm"><span className="text-gray-500">Collector</span><span>{lastReceipt.collectorName}</span></div>
@@ -1085,17 +1129,9 @@ export default function CollectorsDashboard() {
               <div className="flex justify-between text-sm"><span className="text-gray-500">Location</span><span>{lastReceipt.location || '-'}</span></div>
               <div className="flex justify-between text-sm"><span className="text-gray-500">Awarded Points</span><span>{lastReceipt.awardedPoints}</span></div>
             </div>
-            <div className="flex items-center justify-center">
-              <img
-                alt="QR Code"
-                className="border rounded-xl p-2"
-                src={buildQrUrl(qrPayload)}
-                onError={(e)=>{ try { if (!e.currentTarget.dataset.fallback){ e.currentTarget.dataset.fallback='1'; e.currentTarget.src = buildQrFallbackUrl(qrPayload); } } catch {} }}
-              />
-            </div>
           </div>
           <div className="px-6 pb-6 flex justify-end gap-3">
-            <button onClick={printReceipt} className="border px-4 py-2 rounded-lg">Print</button>
+            <button onClick={downloadReceiptPdf} className="border px-4 py-2 rounded-lg">Download PDF</button>
             <button onClick={()=>setShowReceipt(false)} className="bg-gray-900 text-white px-4 py-2 rounded-lg">Close</button>
           </div>
         </div>
@@ -1107,6 +1143,11 @@ export default function CollectorsDashboard() {
     <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 max-w-5xl">
       <ReceiptModal />
       {toast && <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-700 border border-green-200">{toast}</div>}
+      {qtySinceLastRequest >= 20 && (
+        <div className="mb-3 p-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm">
+          Stock is full (≥ 20 kg). Please request transport.
+        </div>
+      )}
       <h2 className="text-xl font-bold text-gray-900 mb-2">Record New Collection</h2>
       {editingId && (
         <div className="mb-4 p-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 text-sm">
@@ -1138,7 +1179,8 @@ export default function CollectorsDashboard() {
               {binLocations.map((loc, idx) => {
                 const name = loc.location || loc.name || '';
                 const city = loc.city || '';
-                const label = city ? `${name} · ${city}` : name;
+                // Use a proper bullet separator to avoid mojibake like 'Â·'
+                const label = city ? `${name} • ${city}` : name;
                 return (
                   <option key={(loc.routeId||loc.id||idx)+name} value={name}>{label}</option>
                 );
@@ -1248,7 +1290,7 @@ export default function CollectorsDashboard() {
         <button type="button" onClick={() => {
           if (!lastReceipt) { setToast("Please save the collection first to generate a receipt."); return; }
           setShowReceipt(true);
-        }} className="flex items-center gap-2 border px-4 py-2 rounded-lg"><QrCodeIcon className="w-5 h-5"/>Generate Receipt/QR</button>
+        }} className="flex items-center gap-2 border px-4 py-2 rounded-lg"><QrCodeIcon className="w-5 h-5"/>Generate Receipt</button>
       </div>
       </form>
 
@@ -1346,8 +1388,89 @@ export default function CollectorsDashboard() {
             <button onClick={()=>{ setFilterMinG(""); setFilterMaxG(""); setFilterFrom(""); setFilterTo(""); setAppliedMinG(""); setAppliedMaxG(""); setAppliedFrom(""); setAppliedTo(""); fetchCollections(); }} className="mt-6 md:mt-0 border px-4 py-2 rounded-lg">Reset</button>
           </div>
         </div>
+        {/* Search field with suggestions (does NOT filter the table) */}
+        <div className="mb-4">
+          <div className="flex items-end gap-2 w-full">
+            <div className="w-full relative">
+              <label className="block text-sm font-medium text-gray-700">Search</label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e)=>setSearchTerm(e.target.value)}
+                placeholder="Start typing (ID, User, Collector, Location)"
+                className="border rounded-lg px-3 py-2 w-full"
+              />
+              {(() => {
+                const term = (searchTerm || '').trim();
+                if (!term) return null;
+                const lower = term.toLowerCase();
+                const starts = (v) => String(v||'').trim().toLowerCase().startsWith(lower);
+                const items = collections
+                  .slice()
+                  .filter(c => {
+                    const idStr = c.collectionId || (c._id?.slice(-6) || '');
+                    const user = c.awardedToUserId?.name || '';
+                    const collector = c.collectorName || '';
+                    const location = c.location || '';
+                    const kg = (Number(c.quantity)||0).toFixed(3);
+                    const g = (((Number(c.quantity)||0) * 1000).toFixed(0));
+                    const pts = String(c.awardedPoints || 0);
+                    return starts(idStr) || starts(user) || starts(collector) || starts(location)
+                      || starts(kg) || starts(g) || starts(pts);
+                  })
+                  .slice(0, 8);
+                const highlight = (value) => {
+                  const str = String(value||'');
+                  if (!str.toLowerCase().startsWith(lower)) return str;
+                  return (
+                    <>
+                      <mark className="bg-yellow-200">{str.slice(0, term.length)}</mark>
+                      {str.slice(term.length)}
+                    </>
+                  );
+                };
+                return (
+                  <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow max-h-64 overflow-auto">
+                    {items.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
+                    ) : (
+                      items.map((c) => {
+                        const idStr = c.collectionId || (c._id?.slice(-6) || '');
+                        const user = c.awardedToUserId?.name || '';
+                        const collector = c.collectorName || '';
+                        const location = c.location || '';
+                        const kg = (Number(c.quantity)||0).toFixed(3) + ' kg';
+                        const g = (((Number(c.quantity)||0) * 1000).toFixed(0)) + ' g';
+                        const pts = String(c.awardedPoints || 0) + ' pts';
+                        return (
+                          <div key={c._id} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-default">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <span className="font-mono text-gray-800">{highlight(idStr)}</span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-700">{highlight(user)}</span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-700">{highlight(collector)}</span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-700">{highlight(location)}</span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-700">{highlight(kg)}</span>
+                              <span className="text-gray-400">/</span>
+                              <span className="text-gray-700">{highlight(g)}</span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-700">{highlight(pts)}</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
         {/* Export PDF button below input fields */}
-        <div className="mb-4 flex justify-center">
+        <div className="mb-4">
           <button onClick={exportFilteredToPdf} className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white shadow-sm">Export PDF</button>
         </div>
         <div className="overflow-x-auto border rounded-xl">
@@ -1411,6 +1534,11 @@ export default function CollectorsDashboard() {
   const MyStockTab = () => (
     <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
       <h2 className="text-xl font-bold text-gray-900 mb-4">My Stock</h2>
+      {qtySinceLastRequest >= 20 && (
+        <div className="mb-4 p-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm">
+          Stock is full (≥ 20 kg). Please request transport.
+        </div>
+      )}
       {currentBatchCollections.length === 0 ? (
         <div className="p-6 border rounded-2xl bg-gray-50 text-gray-700">
           No current stock. New collections will appear here until you send a request.
@@ -1481,11 +1609,85 @@ export default function CollectorsDashboard() {
     <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
       <h2 className="text-xl font-bold text-gray-900 mb-4">Transport Requests</h2>
       {/* Export PDF button centered */}
-      <div className="mb-4 flex justify-center">
+      <div className="mb-4">
         <button
           onClick={exportTransportRequestsToPdf}
           className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white shadow-sm"
         >Export PDF</button>
+      </div>
+      {/* Search field with suggestions (does NOT filter the table) */}
+      <div className="mb-4">
+        <div className="flex items-end gap-2 w-full">
+          <div className="w-full relative">
+            <label className="block text-sm font-medium text-gray-700">Search Requests</label>
+            <input
+              type="text"
+              value={reqSearchTerm}
+              onChange={(e)=>setReqSearchTerm(e.target.value)}
+              placeholder="Start typing (Request ID, Collector, Location, Status)"
+              className="border rounded-lg px-3 py-2 w-full"
+            />
+            {(() => {
+              const term = (reqSearchTerm || '').trim();
+              if (!term) return null;
+              const lower = term.toLowerCase();
+              const starts = (v) => String(v||'').trim().toLowerCase().startsWith(lower);
+              const items = (transportReqs || [])
+                .slice()
+                .filter(r => {
+                  const idStr = r.requestId || (r._id?.slice(-6) || '');
+                  const collector = r.collectorName || '';
+                  const location = r.location || '';
+                  const status = r.status || '';
+                  const kg = (r.quantity != null) ? String(Number(r.quantity).toFixed(3)) : '';
+                  const g = (r.quantity != null) ? String(Math.round(Number(r.quantity)*1000)) : '';
+                  return starts(idStr) || starts(collector) || starts(location) || starts(status)
+                    || starts(kg) || starts(g);
+                })
+                .slice(0, 8);
+              const highlight = (value) => {
+                const str = String(value||'');
+                if (!str.toLowerCase().startsWith(lower)) return str;
+                return (
+                  <>
+                    <mark className="bg-yellow-200">{str.slice(0, term.length)}</mark>
+                    {str.slice(term.length)}
+                  </>
+                );
+              };
+              return (
+                <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow max-h-64 overflow-auto">
+                  {items.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
+                  ) : (
+                    items.map((r, idx) => {
+                      const idStr = r.requestId || (r._id?.slice(-6) || '');
+                      const collector = r.collectorName || '';
+                      const location = r.location || '';
+                      const status = r.status || '';
+                      const kg = (r.quantity != null) ? `${Number(r.quantity).toFixed(3)} kg` : '';
+                      const g = (r.quantity != null) ? `${Math.round(Number(r.quantity)*1000)} g` : '';
+                      return (
+                        <div key={r._id || idx} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-default">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span className="font-mono text-gray-800">{highlight(idStr)}</span>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-700">{highlight(collector)}</span>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-700">{highlight(location)}</span>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-700">{highlight(status)}</span>
+                            {kg && (<><span className="text-gray-400">•</span><span className="text-gray-700">{highlight(kg)}</span><span className="text-gray-400">/</span><span className="text-gray-700">{highlight(g)}</span></>)}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full">
@@ -1584,3 +1786,4 @@ export default function CollectorsDashboard() {
     </div>
   );
 }
+

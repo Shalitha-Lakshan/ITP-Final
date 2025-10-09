@@ -6,6 +6,7 @@ import {
   ArrowTrendingUpIcon,
   DocumentChartBarIcon,
   ClipboardDocumentListIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import LogoutButton from "../common/LogoutButton";
 
@@ -135,7 +136,7 @@ export default function InventoryForms() {
             to="/inventory/materials"
             className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
           >
-            <ArrowTrendingUpIcon className="w-5 h-5" />
+            <Squares2X2Icon className="w-5 h-5" />
             <span className="font-medium">Raw Materials</span>
           </Link>
           <Link

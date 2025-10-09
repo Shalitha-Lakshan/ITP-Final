@@ -12,6 +12,9 @@ import 'jspdf-autotable';
 import PaymentStatusPieChart from '../PaymentStatusPieChart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+// Import the EcoCycle logo
+const ECOCYCLE_LOGO = '/ecocycle-logo.png';
+
 
 // Format currency helper function
 const formatCurrency = (amount) => {
@@ -158,33 +161,96 @@ const FinanceSummaryReport = ({ dateRange }) => {
     fetchFinancialData();
   }, [dateRange]);
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
     
-    // Header with company info
-    doc.setFillColor(0, 100, 180);
-    doc.rect(0, 0, 210, 30, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ECOCYCLE LANKA (PVT) LTD', 105, 15, { align: 'center' });
-    doc.setFontSize(10);
-    doc.text('123 Green Tech Park, Colombo 05, Sri Lanka', 105, 20, { align: 'center' });
-    doc.text('Tel: +94 11 234 5678 | Email: ecocycle923@gmail.com', 105, 25, { align: 'center' });
+    // Load the logo as base64
+    const loadImage = (url) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = window.location.origin + url;
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+      });
+    };
     
-    // Report title and date
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.text('Finance Summary Report', 20, 45);
+    // Wait for the logo to load
+    const logo = await loadImage(ECOCYCLE_LOGO);
+    
+    // Professional color scheme
+    const colors = {
+      primary: '#0d9488',     // Teal - professional and ensures logo visibility
+      secondary: '#2e7d32',   // Green
+      accent: '#ff6f00',      // Orange
+      lightBg: '#f8fafc',     // Light gray background
+      textLight: '#ffffff',   // White text
+      textDark: '#1e293b',    // Dark text
+      border: '#e2e8f0'       // Light border
+    };
+    
+    // Header with professional styling - full width
+    doc.setFillColor(colors.primary);
+    doc.rect(0, 0, 210, 30, 'F'); // Increased height from 20 to 30
+    
+    // Add logo to header (left side) with better spacing
+    if (logo) {
+      const logoWidth = 40; // Increased from 30
+      const logoHeight = (logo.height * logoWidth) / logo.width;
+      const logoX = 20; // More padding from left
+      const logoY = 15 - (logoHeight / 2); // Centered vertically in taller header
+      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+    }
+    
+    // Company info (right side) with better spacing
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20); // Slightly larger
+    doc.setTextColor(colors.textLight);
+    doc.text('ECOCYCLE LANKA (PVT) LTD', 70, 15, { align: 'left' });
+    
+    doc.setFontSize(10); // Slightly larger
+    doc.setFont('helvetica', 'normal');
+    doc.text('123 Green Tech Park, Colombo 05, Sri Lanka', 70, 21, { align: 'left' });
+    doc.text('Tel: +94 11 234 5678 | Email: ecocycle923@gmail.com', 70, 26, { align: 'left' });
+    
+    // Header bottom border - full width with accent color
+    doc.setDrawColor(colors.accent);
+    doc.setLineWidth(0.8); // Slightly thicker line
+    doc.line(0, 30, 210, 30); // Full width line
+    
+    // Report title section
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(colors.primary);
+    doc.text('FINANCIAL SUMMARY REPORT', 105, 40, { align: 'center' });
+    
+    // Decorative line under title
+    doc.setDrawColor(colors.accent);
+    doc.setLineWidth(1);
+    doc.line(60, 43, 150, 43);
+    
+    // Report period and generation date
     doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Period: ${dateRange.from.toLocaleDateString()} to ${dateRange.to.toLocaleDateString()}`, 20, 52);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 59);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    
+    // Background for report info
+    doc.setFillColor(colors.lightBg);
+    doc.roundedRect(15, 45, 180, 12, 2, 2, 'F');
+    
+    // Report period with icons
+    doc.setFillColor(colors.primary);
+    doc.circle(25, 51, 2, 'F');
+    doc.setTextColor(colors.textDark);
+    doc.text(`Report Period: ${format(dateRange.from, 'MMM d, yyyy')} - ${format(dateRange.to, 'MMM d, yyyy')}`, 30, 51);
+    
+    doc.setFillColor(colors.secondary);
+    doc.circle(25, 56, 2, 'F');
+    doc.text(`Generated: ${format(new Date(), 'MMM d, yyyy hh:mm a')}`, 30, 56);
 
     // Add financial cards with improved styling
     const cardWidth = 90; // Wider cards for better readability

@@ -29,13 +29,16 @@ const EmployeeManagement = () => {
   });
   const [formErrors, setFormErrors] = useState({});
 
-  // Fetch employees from API
+  // Fetch employees from API with search
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const url = searchTerm 
-        ? `http://localhost:5000/api/employees?search=${encodeURIComponent(searchTerm)}`
-        : 'http://localhost:5000/api/employees';
+      let url = 'http://localhost:5000/api/employees';
+      
+      if (searchTerm.trim()) {
+        // Add search query that matches from start of name
+        url += `?search=${encodeURIComponent(searchTerm.trim())}&searchType=startsWith`;
+      }
       
       const response = await fetch(url);
       if (response.ok) {
@@ -52,8 +55,59 @@ const EmployeeManagement = () => {
     }
   };
   
+  // Handle search input with validation
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    
+    // Check if input looks like an email (contains @)
+    const isEmailSearch = value.includes('@');
+    
+    if (isEmailSearch) {
+      // Email validation regex (basic format check)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+      
+      // Additional email validation for domain and TLD
+      const [localPart, domain] = value.split('@');
+      if (localPart.length > 64 || domain.length > 253) {
+        toast.error('Email address is too long');
+        return;
+      }
+      
+      // Check TLD (top-level domain) has at least 2 characters
+      const tld = domain.split('.').pop();
+      if (tld.length < 2) {
+        toast.error('Please enter a valid email domain');
+        return;
+      }
+    } else {
+      // For non-email searches, allow alphanumeric and common characters
+      const searchRegex = /^[a-zA-Z0-9\s\-\'\.]*$/;
+      if (value && !searchRegex.test(value)) {
+        toast.error('Please use only letters, numbers, spaces, hyphens, and apostrophes');
+        return;
+      }
+    }
+    
+    // Limit search term length
+    if (value.length > 50) {
+      toast.error('Search term cannot exceed 50 characters');
+      return;
+    }
+    
+    setSearchTerm(value);
+  };
+
   // Debounce search
   useEffect(() => {
+    if (searchTerm.trim() === '') {
+      fetchEmployees();
+      return;
+    }
+    
     const timerId = setTimeout(() => {
       fetchEmployees();
     }, 500);
@@ -405,11 +459,24 @@ const EmployeeManagement = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(employee => 
-    employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.employeeId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEmployees = employees.filter(employee => {
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    const isEmailSearch = searchLower.includes('@');
+    
+    if (isEmailSearch) {
+      // For email searches, match from the start of the email
+      return employee.email && employee.email.toLowerCase().startsWith(searchLower);
+    } else {
+      // For other searches, match from the start of the field
+      return (
+        (employee.fullName && employee.fullName.toLowerCase().startsWith(searchLower)) ||
+        (employee.employeeId && employee.employeeId.toLowerCase().startsWith(searchLower)) ||
+        (employee.email && employee.email.toLowerCase().startsWith(searchLower))
+      );
+    }
+  });
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-LK', {
@@ -419,6 +486,7 @@ const EmployeeManagement = () => {
       maximumFractionDigits: 2
     }).format(amount);
   };
+
 
   return (
     <div className="container mx-auto p-4">
@@ -432,7 +500,7 @@ const EmployeeManagement = () => {
               placeholder="Search by name, email, or ID..."
               className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
             />
           </div>
           <Button

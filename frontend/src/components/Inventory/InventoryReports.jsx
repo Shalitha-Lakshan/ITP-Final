@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import LogoutButton from "../common/LogoutButton";
-import { CubeIcon, ClipboardDocumentListIcon, ChartBarIcon, ArrowTrendingUpIcon, DocumentChartBarIcon } from "@heroicons/react/24/outline";
+import { CubeIcon, ClipboardDocumentListIcon, ChartBarIcon, ArrowTrendingUpIcon, DocumentChartBarIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 
 export default function InventoryReports() {
   const [loading, setLoading] = useState(true);
@@ -12,6 +12,9 @@ export default function InventoryReports() {
   const [summary, setSummary] = useState({ deliveredTotalKg: 0, requestedTotalKg: 0, availableKg: 0 });
   const [deliveries, setDeliveries] = useState([]);
   const [error, setError] = useState("");
+  // Filters: Raw Materials
+  const [materialNameQuery, setMaterialNameQuery] = useState("");
+  const [materialDateQuery, setMaterialDateQuery] = useState("");
 
   const refMaterials = useRef(null);
   const refStock = useRef(null);
@@ -20,6 +23,45 @@ export default function InventoryReports() {
   const refProduction = useRef(null);
 
   const nowString = () => new Date().toLocaleString();
+  // Local today string (YYYY-MM-DD) for date input max
+  const todayStr = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
+
+  // Derived: filtered materials for Raw Materials Report (prefix match on type + optional date)
+  const filteredMaterials = materials.filter((m) => {
+    const needle = materialNameQuery.trim().toLowerCase();
+    const nameOk = needle ? String(m.type || '').toLowerCase().startsWith(needle) : true;
+    const dateOk = materialDateQuery
+      ? (() => {
+          if (!m.lastUpdated) return false;
+          const dt = new Date(m.lastUpdated);
+          if (isNaN(dt.getTime())) return false;
+          const y = dt.getFullYear();
+          const mm = String(dt.getMonth() + 1).padStart(2, '0');
+          const dd = String(dt.getDate()).padStart(2, '0');
+          const only = `${y}-${mm}-${dd}`;
+          return only === materialDateQuery;
+        })()
+      : true;
+    return nameOk && dateOk;
+  });
+
+  // Total stock for currently filtered materials and label for the processed form
+  const filteredMaterialsTotalKg = filteredMaterials.reduce((sum, m) => sum + Number(m.stock || 0), 0);
+  const filteredTypes = Array.from(new Set(filteredMaterials.map((m) => m.type).filter(Boolean)));
+  const processedFormLabel = filteredTypes.length === 1
+    ? filteredTypes[0]
+    : (materialNameQuery.trim()
+        ? materialNameQuery.trim().charAt(0).toUpperCase() + materialNameQuery.trim().slice(1)
+        : 'Processed Form');
+  const footerLabel = materialNameQuery.trim()
+    ? `Total ${processedFormLabel} Stock`
+    : 'Total Stock of all Processed Form';
 
   const fetchAll = async () => {
     setLoading(true);
@@ -56,9 +98,12 @@ export default function InventoryReports() {
     const win = window.open("", "_blank", "width=1200,height=900");
     if (!win) return;
     win.document.open();
-    win.document.write(`<!DOCTYPE html><html><head><title>Inventory Reports - Full Report</title>
+    const logoUrl = '/ecocycle-logo.png?v=' + Date.now();
+    win.document.write(`<!DOCTYPE html><html><head><title>Inventory Summary Report</title>
       <style>
-        body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding: 24px; }
+        @page { size: A4; margin: 0; }
+        html, body { margin: 0; padding: 0; }
+        body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         h1 { font-size: 20px; margin-bottom: 8px; }
         h2 { font-size: 16px; margin: 12px 0; }
         table { width: 100%; border-collapse: collapse; }
@@ -69,12 +114,68 @@ export default function InventoryReports() {
         .print-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; break-inside: avoid; page-break-inside: avoid; margin-bottom: 12px; }
         .meta { color: #6b7280; font-size: 12px; margin-bottom: 12px; }
         img.print-img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
+        /* Ensure summary cards render in print */
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+        .summary-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+        .summary-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+        .summary-card .label { color: #6b7280; font-size: 12px; }
+        .summary-card .value { font-size: 18px; font-weight: 700; }
+        /* Hide interactive controls in print */
+        .print-hide { display: none !important; }
+        /* Full-bleed brand header */
+        .brand-header { background: #0ea5a6; color: #fff; border-radius: 0; overflow: hidden; margin: 0; width: 100vw; border-bottom: 4px solid #f59e0b; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }
+        .brand-top { display: grid; grid-template-columns: 180px 1fr 180px; align-items: center; padding: 18px 22px; }
+        .brand-logo { width: 168px; height: 168px; background: #0ea5a6; border-radius: 50%; display:flex; align-items:center; justify-content:center; }
+        .brand-logo img { width: 150px; height: 150px; object-fit: contain; background: transparent; border-radius: 50%; }
+        .brand-info { line-height: 1.5; text-align: center; }
+        .brand-title { font-size: 22px; font-weight: 600; letter-spacing: 0.4px; }
+        .brand-sub { font-size: 14px; opacity: 0.98; }
+        .report-title { text-align: center; font-size: 24px; color: #0f766e; font-weight: 900; margin: 16px 0 8px; }
+        .title-underline { width: 240px; height: 2px; background: #f59e0b; margin: 8px auto 16px; border-radius: 3px; }
+        .content { padding: 24px; }
+        /* --- Tidy full report layout --- */
+        .content section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; page-break-inside: avoid; break-inside: avoid; }
+        /* Put each top-level section on a new page for clarity */
+        .content section + section { page-break-before: always; }
+        /* Normalize inner card appearance */
+        .content .rounded-2xl, .content .rounded-xl, .content .shadow, .content .shadow-sm { border-radius: 12px !important; box-shadow: none !important; }
+        .content .border, .content .border-gray-200 { border-color: #e5e7eb !important; }
+        .content .border-b { border-bottom: 1px solid #e5e7eb !important; margin-bottom: 8px; }
+        .content .p-4 { padding: 12px !important; }
+        .content .overflow-x-auto { overflow: visible !important; }
+        .content h2 { font-size: 18px !important; margin: 0 0 6px !important; }
+        .content table { margin-top: 10px; }
+        /* Make grids simpler in print */
+        .content .summary-grid, .content .summary-grid-4 { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+        .content .print-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+        /* Avoid rows splitting across pages */
+        table, tr, td, th { page-break-inside: avoid; break-inside: avoid; }
       </style>
     </head><body>
-      <h1>Inventory Reports - Full Report</h1>
-      <div class="meta">Generated at: ${nowString()}</div>
-      <div>${content}</div>
-      <script>setTimeout(() => { window.print(); setTimeout(() => window.close(), 500); }, 250);</script>
+      <div class="brand-header">
+        <div class="brand-top">
+          <div class="brand-logo"><img src="${logoUrl}" alt="EcoCycle Logo" crossorigin="anonymous" /></div>
+          <div class="brand-info">
+            <div class="brand-title">ECOCYCLE LANKA (PVT) LTD</div>
+            <div class="brand-sub">123 Green Tech Park, Colombo 05, Sri Lanka</div>
+            <div class="brand-sub" style="white-space: nowrap">Tel: +94 11 234 5678 | Email: ecocycle923@gmail.com</div>
+          </div>
+          <div class="brand-spacer"></div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="report-title">Inventory Summary Report</div>
+        <div class="title-underline"></div>
+        <!-- meta removed to avoid duplicate timestamps -->
+        <div>${content}</div>
+      </div>
+      <script>
+        (function(){
+          const imgs = Array.from(document.images || []);
+          Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })))
+            .then(() => setTimeout(() => { window.print(); setTimeout(() => window.close(), 500); }, 100));
+        })();
+      </script>
     </body></html>`);
     win.document.close();
   };
@@ -89,9 +190,12 @@ export default function InventoryReports() {
     const win = window.open("", "_blank", "width=1024,height=768");
     if (!win) return;
     win.document.open();
+    const logoUrl = '/ecocycle-logo.png?v=' + Date.now();
     win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
       <style>
-        body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; padding: 24px; }
+        @page { size: A4; margin: 0; }
+        html, body { margin: 0; padding: 0; }
+        body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         h1 { font-size: 20px; margin-bottom: 8px; }
         h2 { font-size: 16px; margin: 12px 0; }
         table { width: 100%; border-collapse: collapse; }
@@ -101,12 +205,51 @@ export default function InventoryReports() {
         .print-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .print-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; break-inside: avoid; page-break-inside: avoid; margin-bottom: 12px; }
         img.print-img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
+        /* Ensure summary cards render in print */
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+        .summary-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+        .summary-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+        .summary-card .label { color: #6b7280; font-size: 12px; }
+        .summary-card .value { font-size: 18px; font-weight: 700; }
+        /* Hide interactive controls in print */
+        .print-hide { display: none !important; }
+        /* Full-bleed brand header */
+        .brand-header { background: #0ea5a6; color: #fff; border-radius: 0; overflow: hidden; margin: 0; width: 100vw; border-bottom: 4px solid #f59e0b; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }
+        .brand-top { display: grid; grid-template-columns: 180px 1fr 180px; align-items: center; padding: 18px 22px; }
+        .brand-logo { width: 168px; height: 168px; background: #0ea5a6; border-radius: 50%; display:flex; align-items:center; justify-content:center; }
+        .brand-logo img { width: 200px; height: 200px; object-fit: contain; background: transparent; border-radius: 50%; }
+        .brand-info { line-height: 1.5; text-align: center; }
+        .brand-title { font-size: 25px; font-weight: 600; letter-spacing: 0.4px; }
+        .brand-sub { font-size: 14px; opacity: 0.98; }
+        .report-title { text-align: center; font-size: 24px; color: #0f766e; font-weight: 900; margin: 16px 0 8px; }
+        .title-underline { width: 240px; height: 2px; background: #f59e0b; margin: 8px auto 35px; border-radius: 3px; }
+        .content { padding: 24px; }
       </style>
     </head><body>
-      <h1>${title}</h1>
-      <div class="meta">Generated at: ${nowString()}</div>
-      <div>${content}</div>
-      <script>setTimeout(() => { window.print(); setTimeout(() => window.close(), 500); }, 200);</script>
+      <div class="brand-header">
+        <div class="brand-top">
+          <div class="brand-logo"><img src="${logoUrl}" alt="EcoCycle Logo" crossorigin="anonymous" /></div>
+          <div class="brand-info">
+            <div class="brand-title">ECOCYCLE LANKA (PVT) LTD</div>
+            <div class="brand-sub">123 Green Tech Park, Colombo 05, Sri Lanka</div>
+            <div class="brand-sub" style="white-space: nowrap">Tel: +94 11 234 5678 | Email: ecocycle923@gmail.com</div>
+          </div>
+          <div class="brand-spacer"></div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="report-title">${title}</div>
+        <div class="title-underline"></div>
+        <!-- meta removed to avoid duplicate timestamps -->
+        <div>${content}</div>
+      </div>
+      <script>
+        (function(){
+          const imgs = Array.from(document.images || []);
+          Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })))
+            .then(() => setTimeout(() => { window.print(); setTimeout(() => window.close(), 500); }, 100));
+        })();
+      </script>
     </body></html>`);
     win.document.close();
   };
@@ -149,7 +292,7 @@ export default function InventoryReports() {
             <span className="font-medium">Analytics</span>
           </Link>
           <Link to="/inventory/materials" className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100">
-            <ArrowTrendingUpIcon className="w-5 h-5" />
+            <Squares2X2Icon className="w-5 h-5" />
             <span className="font-medium">Raw Materials</span>
           </Link>
           <Link to="/inventory/reports" className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg">
@@ -186,35 +329,91 @@ export default function InventoryReports() {
                 <h2 className="text-lg font-bold">Raw Materials Report</h2>
                 <p className="text-sm text-gray-500">Inventory materials with current stock</p>
               </div>
-              <button onClick={() => printSection(refMaterials, 'Raw Materials Report')} className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">Download PDF</button>
+              <button onClick={() => printSection(refMaterials, 'Inventory Raw Materials Report')} className="print-hide px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">Download PDF</button>
             </div>
-            <div ref={refMaterials} className="p-4">
+            <div ref={refMaterials} className="p-4 overflow-x-auto">
               <div className="text-sm text-gray-500 mb-3">Generated at: {nowString()}</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {materials.map((m) => (
-                  <div key={m._id} className="border rounded-xl p-4 shadow-sm">
-                    {m.imageUrl ? (
-                      <img src={`http://localhost:5000${m.imageUrl}`} alt={m.name} className="w-full h-32 object-cover rounded-md mb-3" />
-                    ) : (
-                      <div className="w-full h-32 bg-gray-100 rounded-md mb-3 flex items-center justify-center text-gray-400 text-sm">No Image</div>
-                    )}
-                    <div className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-1">
-                      <span className="text-emerald-700 font-bold">{Number(m.stock).toFixed(3)} Kg</span>
-                      <span className="text-gray-400">—</span>
-                      <span>{m.name}</span>
-                    </div>
-                    <div className="text-xs text-gray-600 mb-2">Code: <span className="font-mono">{m.itemCode}</span></div>
-                    <div className="flex gap-2 mb-2">
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 border text-gray-700">{m.color}</span>
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 border text-gray-700">{m.type}</span>
-                    </div>
-                    <div className="text-xs text-gray-500">Last updated: {m.lastUpdated}</div>
-                  </div>
-                ))}
-                {materials.length === 0 && (
-                  <div className="text-gray-500">No materials found</div>
-                )}
+              {/* Filters */}
+              <div className="print-hide flex flex-col md:flex-row items-start md:items-end gap-3 mb-4">
+                <div className="flex flex-col">
+                  <label className="text-xs text-gray-600 mb-1">Processed Form</label>
+                  <input
+                    type="text"
+                    value={materialNameQuery}
+                    onKeyDown={(e) => {
+                      const allowedControl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+                      const isLetter = /^[a-zA-Z]$/.test(e.key);
+                      const isSpace = e.key === ' ';
+                      if (!isLetter && !isSpace && !allowedControl.includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      const lettersOnly = /^[\p{L}\s]*$/u; // letters and spaces only (all locales)
+                      if (!lettersOnly.test(v)) return; // reject numbers/specials
+                      setMaterialNameQuery(v);
+                    }}
+                    placeholder="Search Processed Form..."
+                    className="border rounded-md px-3 py-2 text-sm w-64"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs text-gray-600 mb-1">Date</label>
+                  <input
+                    type="date"
+                    max={todayStr}
+                    value={materialDateQuery}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v && v > todayStr) return; // block future dates
+                      setMaterialDateQuery(v);
+                    }}
+                    className="border rounded-md px-3 py-2 text-sm w-48"
+                  />
+                </div>
               </div>
+              <table className="min-w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50 text-sm text-gray-700">
+                    <th className="py-2 px-3 font-semibold">Code</th>
+                    <th className="py-2 px-3 font-semibold">Type of Bottle</th>
+                    <th className="py-2 px-3 font-semibold">Processed Form</th>
+                    <th className="py-2 px-3 font-semibold">Color</th>
+                    <th className="py-2 px-3 font-semibold">Stock (Kg)</th>
+                    <th className="py-2 px-3 font-semibold">Last Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMaterials.map((m) => (
+                    <tr key={m._id} className="border-t text-sm">
+                      <td className="py-2 px-3 font-mono">{m.itemCode}</td>
+                      <td className="py-2 px-3">{m.name}</td>
+                      <td className="py-2 px-3">{m.type}</td>
+                      <td className="py-2 px-3">{m.color}</td>
+                      <td className="py-2 px-3 font-semibold">{Number(m.stock).toFixed(3)}</td>
+                      <td className="py-2 px-3">{m.lastUpdated ? new Date(m.lastUpdated).toLocaleString() : '-'}</td>
+                    </tr>
+                  ))}
+                  {materials.length > 0 && filteredMaterials.length === 0 && (
+                    <tr>
+                      <td className="py-4 px-3 text-gray-500" colSpan={6}>No matching results for the selected Processed Form and date.</td>
+                    </tr>
+                  )}
+                  {materials.length === 0 && (
+                    <tr>
+                      <td className="py-4 px-3 text-gray-500" colSpan={6}>No materials found</td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-gray-50">
+                    <td colSpan={6} className="py-3 px-3 text-sm font-semibold text-gray-800">
+                      {footerLabel} = {filteredMaterialsTotalKg.toFixed(3)} Kg
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </section>
 
@@ -225,22 +424,22 @@ export default function InventoryReports() {
                 <h2 className="text-lg font-bold">Stock Summary & Requests</h2>
                 <p className="text-sm text-gray-500">Available, delivered, requested totals and request list</p>
               </div>
-              <button onClick={() => printSection(refStock, 'Stock Summary & Requests')} className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">Download PDF</button>
+              <button onClick={() => printSection(refStock, 'Inventory Stock Summary & Requests')} className="print-hide px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">Download PDF</button>
             </div>
             <div ref={refStock} className="p-4 overflow-x-auto">
               <div className="text-sm text-gray-500 mb-3">Generated at: {nowString()}</div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <div className="rounded border p-3">
-                  <div className="text-xs text-gray-500">Delivered Total (Kg)</div>
-                  <div className="text-xl font-bold">{summary.deliveredTotalKg}</div>
+              <div className="summary-grid grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <div className="summary-card rounded border p-3">
+                  <div className="label text-xs text-gray-500">Delivered Total (Kg)</div>
+                  <div className="value text-xl font-bold">{summary.deliveredTotalKg}</div>
                 </div>
-                <div className="rounded border p-3">
-                  <div className="text-xs text-gray-500">Requested Total (Kg)</div>
-                  <div className="text-xl font-bold">{summary.requestedTotalKg}</div>
+                <div className="summary-card rounded border p-3">
+                  <div className="label text-xs text-gray-500">Requested Total (Kg)</div>
+                  <div className="value text-xl font-bold">{summary.requestedTotalKg}</div>
                 </div>
-                <div className="rounded border p-3">
-                  <div className="text-xs text-gray-500">Available (Kg)</div>
-                  <div className="text-xl font-bold">{summary.availableKg}</div>
+                <div className="summary-card rounded border p-3">
+                  <div className="label text-xs text-gray-500">Available (Kg)</div>
+                  <div className="value text-xl font-bold">{summary.availableKg}</div>
                 </div>
               </div>
               <table className="min-w-full text-left">
@@ -274,16 +473,16 @@ export default function InventoryReports() {
                 <h2 className="text-lg font-bold">Production Report</h2>
                 <p className="text-sm text-gray-500">Production requests summary and details</p>
               </div>
-              <button onClick={() => printSection(refProduction, 'Production Report')} className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">Download PDF</button>
+              <button onClick={() => printSection(refProduction, 'Inventory Production Report')} className="print-hide px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">Download PDF</button>
             </div>
             <div ref={refProduction} className="p-4">
               <div className="text-sm text-gray-500 mb-3">Generated at: {nowString()}</div>
               {/* Summary cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
-                <div className="rounded border p-3"><div className="text-xs text-gray-500">Total Requests</div><div className="text-xl font-bold">{productionRequests.length}</div></div>
-                <div className="rounded border p-3"><div className="text-xs text-gray-500">Pending</div><div className="text-xl font-bold">{productionRequests.filter(r => (r.status||'').toLowerCase()==='pending').length}</div></div>
-                <div className="rounded border p-3"><div className="text-xs text-gray-500">Approved</div><div className="text-xl font-bold">{productionRequests.filter(r => (r.status||'').toLowerCase()==='approved').length}</div></div>
-                <div className="rounded border p-3"><div className="text-xs text-gray-500">Rejected</div><div className="text-xl font-bold">{productionRequests.filter(r => (r.status||'').toLowerCase()==='rejected').length}</div></div>
+              <div className="summary-grid-4 grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+                <div className="summary-card rounded border p-3"><div className="label text-xs text-gray-500">Total Requests</div><div className="value text-xl font-bold">{productionRequests.length}</div></div>
+                <div className="summary-card rounded border p-3"><div className="label text-xs text-gray-500">Pending</div><div className="value text-xl font-bold">{productionRequests.filter(r => (r.status||'').toLowerCase()==='pending').length}</div></div>
+                <div className="summary-card rounded border p-3"><div className="label text-xs text-gray-500">Approved</div><div className="value text-xl font-bold">{productionRequests.filter(r => (r.status||'').toLowerCase()==='approved').length}</div></div>
+                <div className="summary-card rounded border p-3"><div className="label text-xs text-gray-500">Rejected</div><div className="value text-xl font-bold">{productionRequests.filter(r => (r.status||'').toLowerCase()==='rejected').length}</div></div>
               </div>
               {/* Cards list */}
               <div className="print-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -324,7 +523,7 @@ export default function InventoryReports() {
                 <h2 className="text-lg font-bold">Delivery Records (Delivered)</h2>
                 <p className="text-sm text-gray-500">Transport requests marked as Delivered</p>
               </div>
-              <button onClick={() => printSection(refDeliveries, 'Delivery Records (Delivered)')} className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">Download PDF</button>
+              <button onClick={() => printSection(refDeliveries, 'Inventory Delivery Records (Delivered)')} className="print-hide px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">Download PDF</button>
             </div>
             <div ref={refDeliveries} className="p-4">
               <div className="text-sm text-gray-500 mb-3">Generated at: {nowString()}</div>

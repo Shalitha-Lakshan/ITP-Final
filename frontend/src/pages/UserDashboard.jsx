@@ -13,43 +13,7 @@ import LogoutButton from "../components/common/LogoutButton";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 
-const pointsHistory = [
-  { month: "Jan", earned: 120, redeemed: 50, balance: 70 },
-  { month: "Feb", earned: 150, redeemed: 80, balance: 140 },
-  { month: "Mar", earned: 200, redeemed: 60, balance: 280 },
-  { month: "Apr", earned: 180, redeemed: 100, balance: 360 },
-  { month: "May", earned: 220, redeemed: 90, balance: 490 },
-];
-
-const recentOrders = [
-  { id: "ORD001", date: "2025-08-28", items: 3, total: 250, status: "Delivered", points: 25 },
-  { id: "ORD002", date: "2025-08-25", items: 2, total: 180, status: "Shipped", points: 18 },
-  { id: "ORD003", date: "2025-08-20", items: 5, total: 420, status: "Delivered", points: 42 },
-  { id: "ORD004", date: "2025-08-15", items: 1, total: 95, status: "Delivered", points: 10 },
-  { id: "ORD005", date: "2025-08-10", items: 4, total: 320, status: "Delivered", points: 32 },
-];
-
-const pointsBreakdown = [
-  { name: "Purchases", value: 60, points: 294 },
-  { name: "Referrals", value: 25, points: 122 },
-  { name: "Reviews", value: 10, points: 49 },
-  { name: "Bonus", value: 5, points: 25 },
-];
-
-const rewardTiers = [
-  { name: "Bronze", minPoints: 0, maxPoints: 199, benefits: ["5% Discount", "Free Shipping on LKR 5,000+"] },
-  { name: "Silver", minPoints: 200, maxPoints: 499, benefits: ["10% Discount", "Free Shipping", "Priority Support"] },
-  { name: "Gold", minPoints: 500, maxPoints: 999, benefits: ["15% Discount", "Free Shipping", "Early Access", "Birthday Bonus"] },
-  { name: "Platinum", minPoints: 1000, maxPoints: null, benefits: ["20% Discount", "Free Shipping", "VIP Support", "Exclusive Products"] },
-];
-
-const availableRewards = [
-  { id: 1, name: "LKR 1,000 Off Coupon", points: 100, description: "Get LKR 1,000 off your next purchase", type: "discount" },
-  { id: 2, name: "Free Shipping", points: 50, description: "Free shipping on any order", type: "shipping" },
-  { id: 3, name: "LKR 2,500 Gift Card", points: 250, description: "Digital gift card for future purchases", type: "gift_card" },
-  { id: 4, name: "Premium Product", points: 500, description: "Exclusive premium product access", type: "product" },
-];
-
+// Chart colors
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -61,6 +25,10 @@ export default function UserDashboard() {
   const [isOrdersLoading, setIsOrdersLoading] = useState(false);
   const [error, setError] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [pointsHistory, setPointsHistory] = useState([]);
+  const [pointsBreakdown, setPointsBreakdown] = useState([]);
+  const [rewardTiers, setRewardTiers] = useState([]);
+  const [availableRewards, setAvailableRewards] = useState([]);
   const { user, token, updateUser } = useAuth();
   
   const [userProfile, setUserProfile] = useState({
@@ -93,6 +61,97 @@ export default function UserDashboard() {
     if (!dateString) return 'N/A';
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  // Fetch user's points history
+  const fetchPointsHistory = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/points/history`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch points history');
+      }
+      
+      const data = await response.json();
+      setPointsHistory(data);
+    } catch (error) {
+      console.error('Error fetching points history:', error);
+      toast.error('Failed to load points history');
+    }
+  };
+
+  // Fetch points breakdown
+  const fetchPointsBreakdown = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/points/breakdown`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch points breakdown');
+      }
+      
+      const data = await response.json();
+      setPointsBreakdown(data);
+    } catch (error) {
+      console.error('Error fetching points breakdown:', error);
+      toast.error('Failed to load points breakdown');
+    }
+  };
+
+  // Fetch available rewards
+  const fetchAvailableRewards = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/rewards`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch available rewards');
+      }
+      
+      const data = await response.json();
+      setAvailableRewards(data);
+    } catch (error) {
+      console.error('Error fetching rewards:', error);
+      toast.error('Failed to load available rewards');
+    }
+  };
+
+  // Fetch reward tiers
+  const fetchRewardTiers = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/rewards/tiers`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch reward tiers');
+      }
+      
+      const data = await response.json();
+      setRewardTiers(data);
+    } catch (error) {
+      console.error('Error fetching reward tiers:', error);
+      toast.error('Failed to load reward tiers');
+      // Set default tiers if API fails
+      setRewardTiers([
+        { name: "Bronze", minPoints: 0, maxPoints: 199, benefits: ["5% Discount", "Free Shipping on LKR 5,000+"] },
+        { name: "Silver", minPoints: 200, maxPoints: 499, benefits: ["10% Discount", "Free Shipping", "Priority Support"] },
+        { name: "Gold", minPoints: 500, maxPoints: 999, benefits: ["15% Discount", "Free Shipping", "Early Access", "Birthday Bonus"] },
+        { name: "Platinum", minPoints: 1000, maxPoints: null, benefits: ["20% Discount", "Free Shipping", "VIP Support", "Exclusive Products"] },
+      ]);
+    }
   };
 
   // Fetch user's orders from salesorders table
@@ -158,7 +217,13 @@ export default function UserDashboard() {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
+      // Get user ID from the user object in state
+      const userId = user?._id || user?.id;
+      if (!userId) {
+        throw new Error('User ID not found. Please log in again.');
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -255,10 +320,30 @@ export default function UserDashboard() {
     }
   };
 
-  // Fetch user data on component mount and when active tab changes to orders
+  // Fetch all required data on component mount
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        await Promise.all([
+          fetchUserProfile(),
+          fetchPointsHistory(),
+          fetchPointsBreakdown(),
+          fetchAvailableRewards(),
+          fetchRewardTiers()
+        ]);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     if (token) {
-      fetchUserProfile();
+      loadData();
+    } else {
+      setIsLoading(false);
     }
   }, [token]);
 
@@ -302,22 +387,35 @@ export default function UserDashboard() {
   };
 
   const getCurrentTier = () => {
+    if (!rewardTiers?.length) return null;
+    
     return rewardTiers.find(tier => 
-      userProfile.totalPoints >= tier.minPoints && 
-      (tier.maxPoints === null || userProfile.totalPoints <= tier.maxPoints)
-    );
+      userProfile.totalPoints >= (tier?.minPoints || 0) && 
+      (tier?.maxPoints === null || tier?.maxPoints === undefined || userProfile.totalPoints <= tier.maxPoints)
+    ) || rewardTiers[rewardTiers.length - 1]; // Fallback to the highest tier if no match found
   };
 
   const getNextTier = () => {
     const currentTier = getCurrentTier();
-    const currentIndex = rewardTiers.findIndex(tier => tier.name === currentTier.name);
-    return currentIndex < rewardTiers.length - 1 ? rewardTiers[currentIndex + 1] : null;
+    if (!currentTier || !rewardTiers?.length) return null;
+    
+    const currentIndex = rewardTiers.findIndex(tier => tier?.name === currentTier?.name);
+    return currentIndex >= 0 && currentIndex < rewardTiers.length - 1 ? rewardTiers[currentIndex + 1] : null;
   };
 
   const renderOverview = () => {
     const currentTier = getCurrentTier();
+    if (!currentTier) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      );
+    }
+    
     const nextTier = getNextTier();
-    const progressToNext = nextTier ? ((userProfile.totalPoints - currentTier.minPoints) / (nextTier.minPoints - currentTier.minPoints)) * 100 : 100;
+    const progressToNext = nextTier && currentTier ? 
+      ((userProfile.totalPoints - currentTier.minPoints) / (nextTier.minPoints - currentTier.minPoints)) * 100 : 100;
 
     return (
       <>
@@ -455,7 +553,7 @@ export default function UserDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.slice(0, 3).map(order => (
+                {orders.slice(0, 3).map(order => (
                   <tr key={order.id} className="border-b hover:bg-gray-50">
                     <td className="p-3 font-medium">{order.id}</td>
                     <td className="p-3">{order.date}</td>

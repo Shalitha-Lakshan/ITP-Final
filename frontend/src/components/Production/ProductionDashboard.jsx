@@ -528,7 +528,14 @@ const ProductionDashboard = () => {
       // Digits only while typing; allow empty; max 3 digits to allow 100
       const effRegex = /^\d{0,3}$/;
       if (!effRegex.test(String(value))) return;
-      setMachineForm((prev) => ({ ...prev, [name]: value }));
+      // Clamp to 100 while typing if user enters more than 100
+      if (value === '') {
+        setMachineForm((prev) => ({ ...prev, [name]: '' }));
+      } else {
+        const n = parseInt(String(value), 10);
+        const clamped = n > 100 ? 100 : n;
+        setMachineForm((prev) => ({ ...prev, [name]: String(clamped) }));
+      }
       return;
     }
     if (name === 'lastMaintenance') {
@@ -745,7 +752,7 @@ const ProductionDashboard = () => {
 
   // Filtered products by search
   const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    String(p.name || '').toLowerCase().startsWith(searchTerm.toLowerCase().trim())
   );
 
   // Analytics visualizations have been moved to a dedicated page.
@@ -968,7 +975,6 @@ const ProductionDashboard = () => {
   }, []);
 
   // Handle form input with validation
-  //Products Validations
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -980,11 +986,15 @@ const ProductionDashboard = () => {
         return; // Don't update if invalid
       }
     } else if (name === 'price') {
-      // Price: digits only, up to 4 digits, auto-format with thousands separators (e.g., 1,000)
-      const digitsOnly = String(value).replace(/[^0-9]/g, '');
-      const limited = digitsOnly.slice(0, 4);
-      const formatted = limited ? Number(limited).toLocaleString('en-US') : '';
-      setNewProduct({ ...newProduct, [name]: formatted });
+      // Price: allow up to 4 integer digits and up to 2 decimal digits while typing
+      // Keep thousands separators on integer part, allow trailing dot
+      const raw = String(value).replace(/[^0-9.]/g, '');
+      const parts = raw.split('.');
+      const intPart = (parts[0] || '').slice(0, 4);
+      const fracPart = (parts[1] || '').slice(0, 2);
+      const intFormatted = intPart ? Number(intPart).toLocaleString('en-US') : '';
+      const formatted = parts.length > 1 ? `${intFormatted}${fracPart !== '' ? '.' + fracPart : '.'}` : intFormatted;
+      setNewProduct((prev) => ({ ...prev, price: formatted }));
       return;
     } else if (name === 'stock') {
       // Stock Level: only digits, up to 4 characters
@@ -995,6 +1005,22 @@ const ProductionDashboard = () => {
     }
     
     setNewProduct({ ...newProduct, [name]: value });
+  };
+
+  // Ensure price shows two decimals on blur (preserve cents typed)
+  const handlePriceBlur = () => {
+    const raw = String(newProduct.price || '').replace(/,/g, '');
+    const m = raw.match(/^(\d{1,4})(?:\.(\d{0,2}))?$/);
+    const intPart = m ? m[1] : '';
+    let fracPart = m ? (m[2] || '') : '';
+    if (!intPart) {
+      setNewProduct((prev) => ({ ...prev, price: '' }));
+      return;
+    }
+    fracPart = (fracPart + '00').slice(0, 2);
+    const num = Number(`${intPart}.${fracPart}`);
+    const formatted = num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    setNewProduct((prev) => ({ ...prev, price: formatted }));
   };
 
   // Handle image upload
@@ -1384,7 +1410,7 @@ const ProductionDashboard = () => {
                         {newProduct.name && !/^[A-Za-z\s]*$/.test(newProduct.name) && (<p className="text-red-500 text-xs mt-1">Product name can only contain letters and spaces</p>)}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium">Item Price</label>
+                        <label className="block text-sm font-medium">Unit Price (LKR)</label>
                         <input
                           type="text"
                           name="price"
@@ -1448,7 +1474,36 @@ const ProductionDashboard = () => {
                     <h3 className="font-bold text-lg">Products</h3>
                     <div className="relative">
                       <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                      <input type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-700" />
+                      <input
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (!/^[A-Za-z\s]*$/.test(v)) return; // letters and spaces only
+                          setSearchTerm(v);
+                        }}
+                        onKeyDown={(e) => {
+                          const allowedControl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+                          const isLetter = /^[A-Za-z]$/.test(e.key);
+                          const isSpace = e.key === ' ';
+                          if (!isLetter && !isSpace && !allowedControl.includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+                          const cleaned = text.replace(/[^A-Za-z\s]/g, '');
+                          const next = (searchTerm || '') + cleaned;
+                          if (/^[A-Za-z\s]*$/.test(next)) {
+                            setSearchTerm(next);
+                          }
+                        }}
+                        pattern="[A-Za-z\s]*"
+                        title="Only letters and spaces are allowed"
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-700"
+                      />
                     </div>
                   </div>
                   <div className="mb-4">
@@ -1469,7 +1524,7 @@ const ProductionDashboard = () => {
                           <th className="text-left py-3 px-4 font-semibold text-gray-700">Product Name</th>
                           <th className="text-left py-3 px-4 font-semibold text-gray-700">Category</th>
                           <th className="text-left py-3 px-4 font-semibold text-gray-700">Description</th>
-                          <th className="text-center py-3 px-4 font-semibold text-gray-700">Item Price (LKR)</th>
+                          <th className="text-center py-3 px-4 font-semibold text-gray-700">Unit Price (LKR)</th>
                           <th className="text-center py-3 px-4 font-semibold text-gray-700">Reward Points</th>
                           <th className="text-center py-3 px-4 font-semibold text-gray-700">Stock</th>
                           <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
@@ -1534,9 +1589,38 @@ const ProductionDashboard = () => {
                       <input
                         type="text"
                         value={pointsPerRupee}
-                        onChange={(e) => setPointsPerRupee(e.target.value)}
-                        placeholder="e.g., 0.10"
-                        inputMode="decimal"
+                        onChange={(e) => {
+                          // Allow only digits, strip leading zeros, limit to 3 digits
+                          const raw = e.target.value;
+                          let cleaned = raw.replace(/[^0-9]/g, '');
+                          cleaned = cleaned.replace(/^0+/, '');
+                          cleaned = cleaned.slice(0, 3);
+                          if (/^\d{0,3}$/.test(cleaned)) {
+                            setPointsPerRupee(cleaned);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          const allowedControl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+                          const isDigit = /\d/.test(e.key);
+                          if (allowedControl.includes(e.key)) return;
+                          if (isDigit) return;
+                          // Block letters, special chars, dot, minus, plus, 'e'
+                          e.preventDefault();
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+                          let cleaned = text.replace(/[^0-9]/g, '');
+                          cleaned = cleaned.replace(/^0+/, '');
+                          cleaned = cleaned.slice(0,3);
+                          if (/^\d{0,3}$/.test(cleaned)) {
+                            setPointsPerRupee(cleaned);
+                          }
+                        }}
+                        placeholder="e.g., 100"
+                        inputMode="numeric"
+                        pattern="^\d{1,3}$"
+                        title="Enter up to 3 digits (integers only)"
                         className="mt-1 w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>

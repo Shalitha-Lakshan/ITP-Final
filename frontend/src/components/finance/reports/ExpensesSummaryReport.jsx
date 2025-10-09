@@ -1,230 +1,443 @@
 import React, { useState, useEffect } from 'react';
-import { Download, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { Card, CardContent } from '../../ui/card';
+import { 
+  Download, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  DollarSign,
+  CheckCircle,
+  Clock,
+  XCircle
+} from 'lucide-react';
 import { Button } from '../../ui/button';
 import { format } from 'date-fns';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+// Format currency helper function
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-LK', {
+    style: 'currency',
+    currency: 'LKR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount || 0);
+};
 
 const ExpensesSummaryReport = ({ dateRange }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [expensesByCategory, setExpensesByCategory] = useState([]);
-  const [expenseTrends, setExpenseTrends] = useState({});
-  const [totalExpenses, setTotalExpenses] = useState(0);
-  const [avgExpense, setAvgExpense] = useState(0);
+  const [error, setError] = useState(null);
+  const [expensesData, setExpensesData] = useState({
+    totalExpenses: 0,
+    paidExpenses: 0,
+    pendingExpenses: 0,
+    failedExpenses: 0,
+    avgExpense: 0,
+    trend: 0,
+    expensesByCategory: [],
+    recentExpenses: []
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Simulated data - replace with actual API call
-        const response = await fetch(`/api/expenses/summary?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`);
-        const data = await response.json();
-        
-        setExpensesByCategory(data.categories || []);
-        setExpenseTrends(data.trends || {});
-        setTotalExpenses(data.total || 0);
-        setAvgExpense(data.average || 0);
-      } catch (error) {
-        console.error('Error fetching expenses summary:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchExpenseData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Fetch summary data
+      const [summaryResponse, expensesResponse] = await Promise.all([
+        axios.get(`${API_URL}/expenses/summary`, {
+          params: {
+            startDate: dateRange.from.toISOString(),
+            endDate: dateRange.to.toISOString()
+          },
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }),
+        // Fetch recent expenses
+        axios.get(`${API_URL}/expenses`, {
+          params: {
+            startDate: dateRange.from.toISOString(),
+            endDate: dateRange.to.toISOString(),
+            limit: 5,
+            sort: '-date'
+          },
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+      ]);
 
-    fetchData();
-  }, [dateRange]);
+      const summary = summaryResponse.data.data || {};
+      const recentExpenses = expensesResponse.data.data || [];
+      
+      // Calculate trend (simple month-over-month comparison for now)
+      const previousMonth = new Date(dateRange.from);
+      previousMonth.setMonth(previousMonth.getMonth() - 1);
+      const prevMonthEnd = new Date(dateRange.to);
+      prevMonthEnd.setMonth(prevMonthEnd.getMonth() - 1);
+      
+      // In a real app, we would fetch previous period data here
+      // For now, we'll use a simple calculation
+      const trend = summary.total > 0 ? 5 : 0; // Example trend value
 
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(16).setFont(undefined, 'bold');
-    doc.text('ECOCYCLE LANKA (PVT) LTD', 105, 20, { align: 'center' });
-    doc.setFontSize(10).setFont(undefined, 'normal');
-    doc.text('123 Green Tech Park, Colombo 05, Sri Lanka', 105, 28, { align: 'center' });
-    doc.text('Tel: +94 11 234 5678 | Email: ecocycle923@gmail.com | Web: www.ecocycle.lk', 105, 33, { align: 'center' });
-    
-    // Title
-    doc.setFontSize(14).setFont(undefined, 'bold');
-    doc.text('EXPENSES SUMMARY REPORT', 105, 45, { align: 'center' });
-    
-    // Date range
-    doc.setFontSize(10).setFont(undefined, 'normal');
-    doc.text(
-      `Period: ${format(dateRange.from, 'MMM d, yyyy')} to ${format(dateRange.to, 'MMM d, ')}`, 
-      14, 
-      55
-    );
-    
-    // Summary stats
-    doc.setFontSize(11).setFont(undefined, 'bold');
-    doc.text('Total Expenses:', 14, 70);
-    doc.text(`LKR ${totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 50, 70);
-    
-    doc.text('Average Daily Expense:', 100, 70);
-    doc.text(`LKR ${avgExpense.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 160, 70);
-    
-    // Expenses by category table
-    doc.autoTable({
-      startY: 80,
-      head: [['Category', 'Amount (LKR)', 'Percentage', 'Trend']],
-      body: expensesByCategory.map(expense => [
-        expense.category,
-        { 
-          content: expense.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }),
-          styles: { halign: 'right' }
-        },
-        { 
-          content: `${((expense.amount / totalExpenses) * 100).toFixed(1)}%`,
-          styles: { halign: 'right' }
-        },
-        { 
-          content: expenseTrends[expense.category] > 0 ? 
-            { content: `+${expenseTrends[expense.category]}%`, styles: { textColor: [255, 0, 0] } } : 
-            { content: `${expenseTrends[expense.category]}%`, styles: { textColor: [0, 128, 0] } },
-          styles: { halign: 'center' }
-        }
-      ]),
-      theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246] },
-      columnStyles: { 
-        0: { cellWidth: 60 },
-        1: { cellWidth: 40, halign: 'right' },
-        2: { cellWidth: 30, halign: 'right' },
-        3: { cellWidth: 30, halign: 'center' }
-      },
-      margin: { top: 15 }
-    });
-    
-    // Add footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.text(
-        `Page ${i} of ${pageCount} | Generated on ${new Date().toLocaleString()}`, 
-        doc.internal.pageSize.getWidth() / 2,
-        doc.internal.pageSize.getHeight() - 10,
-        { align: 'center' }
-      );
+      // Format categories
+      const categories = summary.categories || [];
+      const formattedCategories = categories.map(cat => ({
+        name: cat._id || 'Uncategorized',
+        amount: cat.total || 0,
+        count: cat.count || 0,
+        percentage: summary.total > 0 ? ((cat.total / summary.total) * 100).toFixed(1) : 0
+      })).sort((a, b) => b.amount - a.amount);
+
+      // Format recent expenses
+      const formattedRecentExpenses = recentExpenses.map(exp => ({
+        id: exp._id,
+        description: exp.description || 'No description',
+        date: exp.date,
+        amount: exp.amount || 0,
+        category: exp.category || 'Uncategorized',
+        status: exp.status || 'pending',
+        paymentMethod: exp.paymentMethod || 'N/A'
+      }));
+
+      setExpensesData({
+        totalExpenses: summary.total || 0,
+        paidExpenses: summary.paid || 0,
+        pendingExpenses: summary.pending || 0,
+        failedExpenses: summary.failed || 0,
+        avgExpense: summary.avgExpense || 0,
+        trend,
+        expensesByCategory: formattedCategories,
+        recentExpenses: formattedRecentExpenses
+      });
+    } catch (error) {
+      console.error('Error fetching expense data:', error);
+      setError('Failed to load expense data. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    doc.save(`expenses-summary-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchExpenseData();
+  }, [dateRange]);
+
+  const loadImage = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = window.location.origin + url;
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+    });
+  };
+
+  const exportToPDF = async () => {
+    try {
+      // Show loading state
+      const toastId = toast.loading('Generating PDF report...');
+      
+      // Dynamically import required libraries
+      const { jsPDF } = await import('jspdf');
+      const autoTable = (await import('jspdf-autotable')).default;
+      
+      // Initialize PDF document
+      const doc = new jsPDF();
+      
+      // Colors
+      const colors = {
+        primary: [13, 148, 136], // Teal
+        secondary: [16, 86, 167], // Blue
+        success: [40, 167, 69], // Green
+        warning: [255, 193, 7], // Yellow
+        danger: [220, 53, 69], // Red
+        light: [248, 249, 250], // Light gray
+        dark: [33, 37, 41] // Dark gray
+      };
+      
+      // Add header with logo and company info
+      const logo = await loadImage('/ecocycle-logo.png');
+      if (logo) {
+        const logoWidth = 30;
+        const logoHeight = (logo.height * logoWidth) / logo.width;
+        doc.addImage(logo, 'PNG', 20, 15, logoWidth, logoHeight);
+      }
+      
+      // Company info
+      doc.setFont('helvetica', 'bold').setFontSize(16).setTextColor(...colors.dark);
+      doc.text('ECO CYCLE LANKA (PVT) LTD', 60, 25);
+      
+      doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(100);
+      doc.text('123 Green Tech Park, Colombo 05, Sri Lanka', 60, 30);
+      doc.text('Tel: +94 11 234 5678 | Email: ecocycle923@gmail.com', 60, 35);
+      
+      // Report title and date
+      doc.setFont('helvetica', 'bold').setFontSize(14).setTextColor(...colors.primary);
+      doc.text('EXPENSES SUMMARY REPORT', 105, 50, { align: 'center' });
+      
+      doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(100);
+      doc.text(
+        `Report Period: ${format(dateRange.from, 'MMM d, yyyy')} - ${format(dateRange.to, 'MMM d, yyyy')}`, 
+        105, 
+        60,
+        { align: 'center' }
+      );
+      
+      // Summary cards
+      const summaryData = [
+        { 
+          title: 'TOTAL EXPENSES', 
+          value: expensesData.totalExpenses, 
+          color: colors.primary,
+          icon: 'dollar'
+        },
+        { 
+          title: 'PAID', 
+          value: expensesData.paidExpenses, 
+          color: colors.success,
+          icon: 'check'
+        },
+        { 
+          title: 'PENDING', 
+          value: expensesData.pendingExpenses, 
+          color: colors.warning,
+          icon: 'clock'
+        },
+        { 
+          title: 'FAILED', 
+          value: expensesData.failedExpenses, 
+          color: colors.danger,
+          icon: 'x'
+        }
+      ];
+      
+      // Draw summary cards
+      const cardWidth = 42;
+      const cardHeight = 25;
+      const startY = 75;
+      const gap = 10;
+      
+      summaryData.forEach((card, index) => {
+        const x = 15 + (index % 2) * (cardWidth + gap);
+        const y = startY + Math.floor(index / 2) * (cardHeight + gap);
+        
+        // Card background
+        doc.setFillColor(240, 240, 240);
+        doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'F');
+        
+        // Card border
+        doc.setDrawColor(...card.color);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'S');
+        
+        // Card content
+        doc.setFont('helvetica', 'bold').setFontSize(8).setTextColor(100);
+        doc.text(card.title, x + 5, y + 8);
+        
+        doc.setFont('helvetica', 'bold').setFontSize(10).setTextColor(...card.color);
+        doc.text(
+          formatCurrency(card.value), 
+          x + 5, 
+          y + 16
+        );
+      });
+      
+      // Expenses by category table
+      const tableStartY = startY + 2 * (cardHeight + gap) + 10;
+      
+      doc.setFont('helvetica', 'bold').setFontSize(12).setTextColor(...colors.dark);
+      doc.text('EXPENSES BY CATEGORY', 15, tableStartY - 5);
+      
+      autoTable(doc, {
+        startY: tableStartY,
+        head: [['Category', 'Amount', 'Transactions', 'Status']],
+        body: expensesData.expensesByCategory.map(cat => [
+          cat.name || 'Uncategorized',
+          { 
+            content: formatCurrency(cat.amount).replace('LKR', '').trim(),
+            styles: { halign: 'right' }
+          },
+          cat.count.toString(),
+          { 
+            content: '',
+            styles: { 
+              cellWidth: 10,
+              fillColor: cat.status === 'active' ? colors.success : colors.warning,
+              textColor: [255, 255, 255],
+              cellPadding: 1
+            }
+          }
+        ]),
+        theme: 'grid',
+        headStyles: {
+          fillColor: colors.primary,
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        bodyStyles: {
+          fontSize: 9,
+          cellPadding: 3,
+          lineColor: [200, 200, 200],
+          lineWidth: 0.1
+        },
+        columnStyles: {
+          0: { cellWidth: 'auto' },
+          1: { cellWidth: 30, halign: 'right' },
+          2: { cellWidth: 25, halign: 'center' },
+          3: { cellWidth: 10, halign: 'center' }
+        },
+        margin: { left: 15, right: 15 }
+      });
+      
+      // Recent transactions table
+      doc.setFont('helvetica', 'bold').setFontSize(12).setTextColor(...colors.dark);
+      doc.text('RECENT TRANSACTIONS', 15, doc.lastAutoTable.finalY + 15);
+      
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 20,
+        head: [['Date', 'Description', 'Category', 'Amount', 'Status']],
+        body: expensesData.recentExpenses.map(expense => ({
+          date: format(new Date(expense.date), 'MMM d, yyyy'),
+          description: expense.description || 'No description',
+          category: expense.category || 'Uncategorized',
+          amount: { 
+            content: formatCurrency(expense.amount).replace('LKR', '').trim(),
+            styles: { halign: 'right' }
+          },
+          status: {
+            content: expense.status?.charAt(0).toUpperCase() + expense.status?.slice(1) || 'Unknown',
+            styles: {
+              fillColor: expense.status === 'paid' ? colors.success : 
+                        expense.status === 'pending' ? colors.warning : colors.danger,
+              textColor: [255, 255, 255],
+              cellPadding: 2,
+              fontSize: 8
+            }
+          }
+        })),
+        theme: 'grid',
+        headStyles: {
+          fillColor: colors.primary,
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        bodyStyles: {
+          fontSize: 9,
+          cellPadding: 3,
+          lineColor: [200, 200, 200],
+          lineWidth: 0.1
+        },
+        columnStyles: {
+          0: { cellWidth: 25 },
+          1: { cellWidth: 'auto' },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 25, halign: 'right' },
+          4: { cellWidth: 25, halign: 'center' }
+        },
+        margin: { left: 15, right: 15 },
+        didDrawPage: function(data) {
+          // Footer
+          const pageCount = doc.internal.getNumberOfPages();
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          
+          // Add page number
+          doc.setFontSize(8);
+          doc.setTextColor(100);
+          doc.text(
+            `Page ${data.pageCount} of ${pageCount}`, 
+            pageWidth - 20, 
+            pageHeight - 10,
+            { align: 'right' }
+          );
+          
+          // Add generated timestamp
+          doc.text(
+            `Generated on: ${format(new Date(), 'MMM d, yyyy hh:mm a')}`, 
+            20, 
+            pageHeight - 10
+          );
+          
+          // Add company name
+          doc.setFont('helvetica', 'bold');
+          doc.text('ECO CYCLE LANKA (PVT) LTD', pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
+      });
+      
+      // Save the PDF
+      doc.save(`expenses-summary-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      
+      // Dismiss loading toast
+      toast.dismiss();
+      toast.success('Expenses summary report generated successfully');
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    }
+  };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl font-semibold">Expenses Summary Report</h2>
-          <p className="text-sm text-muted-foreground">
-            {format(dateRange.from, 'MMM d, yyyy')} - {format(dateRange.to, 'MMM d, yyyy')}
-          </p>
+    <div className="expenses-summary-report p-4">
+      {/* Cards */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="card p-4 bg-white shadow rounded">
+          <div className="flex items-center justify-between">
+            <DollarSign className="text-teal-500" />
+            <ArrowUpRight className="text-green-500" />
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">Total Expenses</p>
+            <p className="text-lg font-bold">{formatCurrency(expensesData.totalExpenses)}</p>
+          </div>
         </div>
-        <Button onClick={exportToPDF}>
-          <Download className="mr-2 h-4 w-4" />
-          Export PDF
+        <div className="card p-4 bg-white shadow rounded">
+          <div className="flex items-center justify-between">
+            <CheckCircle className="text-green-500" />
+            <ArrowUpRight className="text-green-500" />
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">Paid</p>
+            <p className="text-lg font-bold">{formatCurrency(expensesData.paidExpenses)}</p>
+          </div>
+        </div>
+        <div className="card p-4 bg-white shadow rounded">
+          <div className="flex items-center justify-between">
+            <Clock className="text-orange-500" />
+            <ArrowDownRight className="text-orange-500" />
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">Pending</p>
+            <p className="text-lg font-bold">{formatCurrency(expensesData.pendingExpenses)}</p>
+          </div>
+        </div>
+        <div className="card p-4 bg-white shadow rounded">
+          <div className="flex items-center justify-between">
+            <XCircle className="text-red-500" />
+            <ArrowDownRight className="text-red-500" />
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">Failed</p>
+            <p className="text-lg font-bold">{formatCurrency(expensesData.failedExpenses)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* PDF Export */}
+      <div className="mb-6">
+        <Button onClick={exportToPDF} className="flex items-center gap-2">
+          <Download size={16} /> Export to PDF
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Expenses</p>
-                <p className="text-2xl font-bold">
-                  LKR {totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <div className="bg-red-100 p-3 rounded-full">
-                <TrendingDown className="h-6 w-6 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg. Daily Expense</p>
-                <p className="text-2xl font-bold">
-                  LKR {avgExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-full">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Categories</p>
-                <p className="text-2xl font-bold">
-                  {expensesByCategory.length}
-                </p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-full">
-                <ArrowUpRight className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Expenses by Category</h3>
-        <div className="space-y-2">
-          {expensesByCategory.map((expense) => {
-            const percentage = (expense.amount / totalExpenses) * 100;
-            const trend = expenseTrends[expense.category] || 0;
-            
-            return (
-              <div key={expense.category} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center">
-                    <span className="font-medium w-32 truncate">{expense.category}</span>
-                    <span className="text-muted-foreground ml-2">{percentage.toFixed(1)}%</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="w-24 text-right">
-                      LKR {expense.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </span>
-                    <span className={`ml-2 flex items-center ${trend > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {trend > 0 ? (
-                        <ArrowUpRight className="h-4 w-4 mr-1" />
-                      ) : (
-                        <ArrowDownRight className="h-4 w-4 mr-1" />
-                      )}
-                      {Math.abs(trend)}%
-                    </span>
-                  </div>
-                </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full" 
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Charts / Tables can go here if needed */}
     </div>
   );
 };

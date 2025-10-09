@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+
 import {
   CubeIcon,
   ChartBarIcon,
   DocumentChartBarIcon,
   ArrowTrendingUpIcon,
+  Squares2X2Icon,
   ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import LogoutButton from "../common/LogoutButton";
+
+
 
 export default function InventoryMaterials() {
   const location = useLocation();
@@ -103,15 +107,11 @@ export default function InventoryMaterials() {
     });
   };
 
-  // Derived: filtered inventory by search term (name, color, type)
+  // Derived: filtered inventory by Processed Form only (prefix match)
   const filteredInventory = inventory.filter((item) => {
     const needle = searchTerm.trim().toLowerCase();
     if (!needle) return true;
-    return (
-      String(item.name || "").toLowerCase().includes(needle) ||
-      String(item.color || "").toLowerCase().includes(needle) ||
-      String(item.type || "").toLowerCase().includes(needle)
-    );
+    return String(item.type || "").toLowerCase().startsWith(needle);
   });
 
   // Fetch inventory
@@ -379,7 +379,8 @@ export default function InventoryMaterials() {
             to="/inventory/materials"
             className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
           >
-            <ArrowTrendingUpIcon className="w-5 h-5" />
+   
+            <Squares2X2Icon className="w-5 h-5" />
             <span className="font-medium">Raw Materials</span>
           </Link>
           <Link
@@ -440,14 +441,14 @@ export default function InventoryMaterials() {
             )}
             {/* --- inputs --- */}
             <div>
-              <label className="block text-sm font-medium">Item Name</label>
+              <label className="block text-sm font-medium">Type of Bottle</label>
               <input 
                 type="text" 
                 name="name" 
                 value={newItem.name} 
                 onChange={handleInputChange} 
                 className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                placeholder="Enter item name (letters and spaces only)"
+                placeholder="Enter type of bottle (letters and spaces only)"
               />
               <p className="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
             </div>
@@ -538,8 +539,21 @@ export default function InventoryMaterials() {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by Item Name, Color, or Processed Form..."
+                onKeyDown={(e) => {
+                  const allowedControl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+                  const isLetter = /^[a-zA-Z]$/.test(e.key);
+                  const isSpace = e.key === ' ';
+                  if (!isLetter && !isSpace && !allowedControl.includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  const lettersOnly = /^[\p{L}\s]*$/u; // letters and spaces only
+                  if (!lettersOnly.test(v)) return;
+                  setSearchTerm(v);
+                }}
+                placeholder="Search Processed Form..."
                 className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -550,7 +564,7 @@ export default function InventoryMaterials() {
                 <tr className="bg-gradient-to-r from-blue-50 to-indigo-50">
                   <th className="p-4 border border-gray-200 text-sm font-semibold text-gray-700 bg-blue-50">Item Code</th>
                   <th className="p-4 border border-gray-200 text-sm font-semibold text-gray-700 bg-indigo-50">Image</th>
-                  <th className="p-4 border border-gray-200 text-sm font-semibold text-gray-700 bg-blue-50">Item Name</th>
+                  <th className="p-4 border border-gray-200 text-sm font-semibold text-gray-700 bg-blue-50">Type of Bottle</th>
                   <th className="p-4 border border-gray-200 text-sm font-semibold text-gray-700 bg-indigo-50">Color</th>
                   <th className="p-4 border border-gray-200 text-sm font-semibold text-gray-700 bg-blue-50">Processed Form</th>
                   <th className="p-4 border border-gray-200 text-sm font-semibold text-gray-700 bg-blue-50">Stock</th>
@@ -685,7 +699,7 @@ export default function InventoryMaterials() {
                     <td colSpan="8" className="p-8 text-center text-gray-500 bg-gray-50">
                       <CubeIcon className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                       <p className="text-lg font-medium">No items match your search</p>
-                      <p className="text-sm">Try a different Item Name, Color, or Processed Form</p>
+                      <p className="text-sm">Try a different Processed Form (e.g. Whole Bottles, Crushed, Powder, etc.)</p>
                     </td>
                   </tr>
                 )}

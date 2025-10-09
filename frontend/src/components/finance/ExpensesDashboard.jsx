@@ -67,7 +67,13 @@ const ExpensesDashboard = () => {
 
   // Filter expenses based on search and filters
   const filteredExpenses = expenses.filter(expense => {
-    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase().trim();
+    const descriptionLower = expense.description.toLowerCase();
+    
+    // Match if description starts with search term (case-insensitive)
+    const matchesSearch = searchTerm === '' || 
+      descriptionLower.startsWith(searchLower);
+      
     const matchesStatus = filters.status === 'all' || expense.status === filters.status;
     const matchesCategory = filters.category === 'all' || expense.category === filters.category;
     const matchesDate = (!filters.startDate || expense.date >= filters.startDate) && 
@@ -518,6 +524,7 @@ const ExpensesDashboard = () => {
               className="block w-full md:w-auto pl-3 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="From"
               value={filters.startDate}
+              max={new Date().toISOString().split('T')[0]}
               onChange={(e) => setFilters({...filters, startDate: e.target.value})}
             />
             
@@ -526,8 +533,10 @@ const ExpensesDashboard = () => {
               className="block w-full md:w-auto pl-3 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="To"
               value={filters.endDate}
+              min={filters.startDate || ''}
+              max={new Date().toISOString().split('T')[0]}
               onChange={(e) => setFilters({...filters, endDate: e.target.value})}
-              min={filters.startDate}
+              disabled={!filters.startDate}
             />
             
             <button

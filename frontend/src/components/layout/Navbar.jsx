@@ -51,18 +51,11 @@ function Navbar({ forceWhiteBackground = false }) {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="group flex items-center space-x-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                isScrolled || forceWhiteBackground ? 'bg-green-600' : 'bg-white/20 backdrop-blur-sm'
-              }`}>
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </div>
-              <span className={`text-2xl font-bold transition-colors duration-300 ${
-                isScrolled || forceWhiteBackground ? 'text-gray-900' : 'text-white'
-              }`}>
-                Eco<span className="text-green-500">Recycle</span>
-              </span>
+              <img 
+                src="/ecocycle-logo.png" 
+                alt="EcoCycle Logo" 
+                className="h-28 w-auto object-contain"
+              />
             </Link>
           </div>
           

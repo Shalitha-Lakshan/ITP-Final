@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import LogoutButton from "../common/LogoutButton";
-import { CubeIcon, ChartBarIcon, DocumentChartBarIcon, ArrowTrendingUpIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import { CubeIcon, ChartBarIcon, DocumentChartBarIcon, ArrowTrendingUpIcon, ClipboardDocumentListIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
 
 export default function InventoryAnalytics() {
@@ -133,7 +133,7 @@ export default function InventoryAnalytics() {
             <span className="font-medium">Analytics</span>
           </Link>
           <Link to="/inventory/materials" className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100">
-            <ArrowTrendingUpIcon className="w-5 h-5" />
+            <Squares2X2Icon className="w-5 h-5" />
             <span className="font-medium">Raw Materials</span>
           </Link>
           <Link to="/inventory/reports" className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100">

@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import LogoutButton from "../common/LogoutButton";
-import { CubeIcon, ClipboardDocumentListIcon, ChartBarIcon, ArrowTrendingUpIcon, DocumentChartBarIcon } from "@heroicons/react/24/outline";
+import { CubeIcon, ClipboardDocumentListIcon, ChartBarIcon, ArrowTrendingUpIcon, DocumentChartBarIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 
 export default function InventoryStockManagement() {
   const [loading, setLoading] = useState(true);
   const [deliveredTotalKg, setDeliveredTotalKg] = useState(0); // shows available Kg
   const [materials, setMaterials] = useState([]);
   const [loadingMaterials, setLoadingMaterials] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [requestWeightKg, setRequestWeightKg] = useState("");
   const [requests, setRequests] = useState([]); // {id, requestId, weightKg, createdAt}
@@ -137,9 +139,24 @@ export default function InventoryStockManagement() {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const res = await axios.get('http://localhost:5000/api/products');
+      const list = Array.isArray(res.data?.products) ? res.data.products : (Array.isArray(res.data) ? res.data : []);
+      setProducts(list);
+    } catch (err) {
+      console.error('Failed to fetch products', err);
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
   useEffect(() => {
     fetchDeliveredTotal();
     fetchMaterials();
+    fetchProducts();
     // Load existing requests from backend
     (async () => {
       try {
@@ -243,7 +260,7 @@ export default function InventoryStockManagement() {
             to="/inventory/materials"
             className="w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100"
           >
-            <ArrowTrendingUpIcon className="w-5 h-5" />
+            <Squares2X2Icon className="w-5 h-5" />
             <span className="font-medium">Raw Materials</span>
           </Link>
           <Link
@@ -324,31 +341,41 @@ export default function InventoryStockManagement() {
             </div>
           )}
 
-          {/* Horizontal raw materials cards */}
+          {/* Raw materials cards (uniform grid, dashboard style without image) */}
           <div className="mt-6">
             {loadingMaterials ? (
               <div className="text-gray-600 text-center">Loading raw materials...</div>
             ) : (
-              <div className="overflow-x-auto">
-                <div className="flex gap-4">
-                  {materials.map((m) => {
-                    const name = m.name || m.itemName || m.title || 'Material';
-                    const code = m.itemCode || m.code || m.sku || '-';
-                    // Stock is in Kg in Raw Materials table
-                    const kg = Number(m.stock) || Number(m.weight) || Number(m.totalWeightKg) || 0;
-                    return (
-                      <div key={m._id || code}
-                        className="min-w-[220px] bg-white rounded-2xl shadow-lg border border-gray-100 p-5 text-center">
-                        <div className="text-xl font-bold text-gray-900">{name}</div>
-                        <div className="text-xs text-gray-500 mt-1">Code: {code}</div>
-                        <div className="mt-3 text-3xl font-extrabold text-gray-900">{Number(kg).toFixed(3)} Kg</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {materials.map((m) => {
+                  const name = m.name || m.itemName || m.title || 'Material';
+                  const code = m.itemCode || m.code || m.sku || '-';
+                  const type = m.type || '-';
+                  const color = m.color || '-';
+                  // Stock is in Kg in Raw Materials table
+                  const kg = Number(m.stock) || Number(m.weight) || Number(m.totalWeightKg) || 0;
+                  const lastUpdated = m.lastUpdated ? new Date(m.lastUpdated).toLocaleString() : '-';
+                  return (
+                    <div key={m._id || code} className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 h-full min-h-[200px] flex flex-col">
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">
+                        <span className="font-extrabold text-emerald-700">{Number(kg).toFixed(3)} Kg</span>
+                        <span className="mx-2 text-gray-300">—</span>
+                        {type}
+                      </h2>
+                      <p className="text-sm text-gray-500 mb-3">Code: <span className="font-semibold text-gray-700">{code}</span></p>
+                      <div className="flex gap-2 mb-4">
+                        <span className="px-3 py-1 bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 text-xs font-medium rounded-full">{color}</span>
+                        <span className="px-3 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 text-xs font-medium rounded-full">{name}</span>
                       </div>
-                    );
-                  })}
-                  {materials.length === 0 && (
-                    <div className="text-gray-600 text-center w-full">No raw materials found</div>
-                  )}
-                </div>
+                      <div className="mt-auto">
+                        <p className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">Last updated: {lastUpdated}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+                {materials.length === 0 && (
+                  <div className="text-gray-600 text-center w-full col-span-full">No raw materials found</div>
+                )}
               </div>
             )}
           </div>
@@ -391,6 +418,66 @@ export default function InventoryStockManagement() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Production Products Table */}
+          <div className="mt-6 bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold">Production Products</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Total Products: <span className="font-semibold text-gray-900">{products.length}</span></span>
+                <button onClick={() => fetchProducts()} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm">Refresh</button>
+              </div>
+            </div>
+            {loadingProducts ? (
+              <div className="text-gray-600">Loading products...</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left">
+                  <thead>
+                    <tr className="bg-gray-50 text-sm text-gray-700">
+                      <th className="py-2 px-3 font-semibold">Image</th>
+                      <th className="py-2 px-3 font-semibold">Product Name</th>
+                      <th className="py-2 px-3 font-semibold">Category</th>
+                      <th className="py-2 px-3 font-semibold">Description</th>
+                      <th className="py-2 px-3 font-semibold text-right">Unit Price (LKR)</th>
+                      <th className="py-2 px-3 font-semibold text-right">Reward Points</th>
+                      <th className="py-2 px-3 font-semibold text-right">Stock</th>
+                      <th className="py-2 px-3 font-semibold text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((p, idx) => (
+                      <tr key={p._id || idx} className="border-t text-sm">
+                        <td className="py-2 px-3">
+                          {p.imageUrl ? (
+                            <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded border" />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-500">—</div>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 font-medium">{p.name}</td>
+                        <td className="py-2 px-3">{p.category || '—'}</td>
+                        <td className="py-2 px-3 max-w-xs truncate" title={p.description}>{p.description || '—'}</td>
+                        <td className="py-2 px-3 text-right font-semibold text-green-700">{Number(p.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="py-2 px-3 text-right">{p.points ?? 0}</td>
+                        <td className="py-2 px-3 text-right">{p.stock ?? 0}</td>
+                        <td className="py-2 px-3 text-center">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${Number(p.stock) < 10 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {Number(p.stock) < 10 ? 'Out of Stock' : 'Available'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {products.length === 0 && (
+                      <tr>
+                        <td className="py-4 px-3 text-gray-500" colSpan={8}>No products found</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Edit Modal */}

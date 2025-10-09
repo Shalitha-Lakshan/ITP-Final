@@ -1,5 +1,5 @@
 // src/components/transport/TransportDashboard.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { validateVehicleForm, mapFormToVehiclePayload } from "../../models/vehicle";
 
@@ -615,6 +615,18 @@ export default function TransportDashboard() {
     if (activeTab === 'vehicles') fetchVehiclesList();
   }, [vehicleSearch, vehicleTypeFilter, vehicleStatusFilter]);
 
+  // Client-side prefix-only filter to ensure first-letter behavior regardless of backend search semantics
+  const filteredVehicles = useMemo(() => {
+    const q = (vehicleSearch || '').toLowerCase().trim();
+    if (!q) return vehiclesList;
+    return vehiclesList.filter(v => {
+      const id = (v.vehicleId || '').toLowerCase();
+      const type = (v.type || '').toLowerCase();
+      const plate = (v.specifications?.licensePlate || '').toLowerCase();
+      return id.startsWith(q) || type.startsWith(q) || plate.startsWith(q);
+    });
+  }, [vehiclesList, vehicleSearch]);
+
   // Fetch Bin Routes when Route tab active and when filters change
   useEffect(() => {
     if (activeTab === 'routes') fetchBinRoutes();
@@ -636,20 +648,138 @@ export default function TransportDashboard() {
 
   // PDF helper via print window (user can Save as PDF)
   const openPdfWindow = (title, columns, rows) => {
-    const date = new Date().toLocaleString();
-    const head = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+    const date = new Date().toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    const head = `<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
       <style>
-        body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
-        h1 { font-size: 20px; margin: 0 0 8px; }
-        .meta { font-size: 12px; color: #6b7280; margin-bottom: 16px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #e5e7eb; padding: 8px; font-size: 12px; }
-        th { background: #f3f4f6; text-align: left; }
-      </style></head><body>`;
-    const tableHead = `<tr>${columns.map(c=>`<th>${c}</th>`).join('')}</tr>`;
-    const tableRows = rows.map(r=>`<tr>${r.map(v=>`<td>${String(v ?? '')}</td>`).join('')}</tr>`).join('');
-    const body = `<h1>${title}</h1><div class="meta">Generated: ${date}</div><table>${tableHead}${tableRows}</table>`;
-    const html = `${head}${body}</body></html>`;
+        @page { margin: 20px; }
+        body { 
+          font-family: Arial, sans-serif; 
+          margin: 0;
+          padding: 0 20px;
+          color: #333;
+        }
+        /* Ensure backgrounds are printed */
+        *, body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        @media print {
+          .header, th {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+        .header {
+          text-align: center;
+          margin: 0 -20px 16px -20px;
+          padding: 16px 20px;
+          background-color: #0c9387; /* blue banner */
+          color: #ffffff; /* white text */
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .header h1 {
+          color: #ffffff;
+          margin: 0 0 6px 0;
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: 0.3px;
+        }
+        .header .line { 
+          color: #ffffff; 
+          font-size: 12px; 
+          margin: 2px 0; 
+        }
+        .report-title {
+          text-align: center;
+          font-size: 16px;
+          font-weight: 600;
+          color: #1a365d;
+          margin: 10px 0 4px 0;
+        }
+        table { 
+          width: 100%; 
+          border-collapse: collapse;
+          margin-top: 15px;
+          font-size: 12px;
+        }
+        th { 
+          background-color: #f7fafc;
+          color: #4a5568;
+          text-align: left;
+          padding: 10px;
+          border: 1px solid #e2e8f0;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 11px;
+          letter-spacing: 0.5px;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        td { 
+          padding: 10px;
+          border: 1px solid #e2e8f0;
+          color: #2d3748;
+        }
+        tr:nth-child(even) {
+          background-color: #f8fafc;
+        }
+        .footer {
+          margin-top: 20px;
+          text-align: center;
+          font-size: 11px;
+          color: #a0aec0;
+          border-top: 1px solid #eee;
+          padding-top: 10px;
+        }
+      </style>
+    </head>
+    <body>`;
+
+    const companyInfo = `
+      <div class="header">
+        <div style="display:grid;grid-template-columns:152px 1fr 72px;align-items:center;gap:4px;">
+          <img src="${window.location.origin}/ecocycle-logo.png" alt="EcoCycle Logo" style="display:block;height:136px;width:136px;object-fit:contain;justify-self:start;" />
+          <div style="text-align:center;">
+            <h1>ECOCYCLE LANKA (PVT) LTD</h1>
+            <div class="line">123 Green Tech Park, Colombo 05, Sri Lanka</div>
+            <div class="line">Tel: +94 11 234 5678 | Email: ecocycle923@gmail.com</div>
+          </div>
+          <div style="width:72px;height:72px;justify-self:end;"></div>
+        </div>
+      </div>
+      <div class="report-title">${title}</div>`;
+
+    const tableHead = `
+      <table>
+        <thead>
+          <tr>${columns.map(c => `<th>${c}</th>`).join('')}</tr>
+        </thead>
+        <tbody>`;
+
+    const tableRows = rows.map(row => 
+      `<tr>${row.map(cell => `<td>${String(cell || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>`).join('')}</tr>`
+    ).join('');
+
+    const footer = `
+        </tbody>
+      </table>
+      <div class="footer">
+        This is a system generated report. For any queries, please contact support@ecocycle.lk
+      </div>`;
+
+    const html = `${head}${companyInfo}${tableHead}${tableRows}${footer}</body></html>`;
 
     // Print via hidden iframe to avoid popup/new tab flicker
     const iframe = document.createElement('iframe');
@@ -1283,7 +1413,7 @@ export default function TransportDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {vehiclesList.map((v) => {
+                {filteredVehicles.map((v) => {
                   return (
                     <tr key={v._id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{v.vehicleId}</td>
@@ -1326,7 +1456,7 @@ export default function TransportDashboard() {
                     </tr>
                   );
                 })}
-                {vehiclesList.length === 0 && (
+                {filteredVehicles.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-4 py-6 text-center text-gray-600">No vehicles found</td>
                   </tr>
